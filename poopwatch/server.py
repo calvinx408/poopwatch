@@ -18,7 +18,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import configstore, notify, secrets, settings_db
+from . import auth, configstore, notify, secrets, settings_db
 from .capture import ffmpeg_bin
 from .config import config
 from .store import Store
@@ -41,6 +41,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def require_dashboard_password(request, call_next):
+    """With a dashboard password set, every request must send it. Without one,
+    this does nothing. CORS preflights pass through so the browser can send
+    the real request."""
+    expected = auth.password()
+    if expected is None or request.method == "OPTIONS":
+        return await call_next(request)
+    if auth.check_basic(request.headers.get("authorization"), expected):
+        return await call_next(request)
+    return JSONResponse(
+        status_code=401,
+        content={"detail": "dashboard password required"},
+        headers={"WWW-Authenticate": 'Basic realm="PoopWatch"'},
+    )
 
 
 class ReviewBody(BaseModel):

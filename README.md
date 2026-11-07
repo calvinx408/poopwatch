@@ -143,6 +143,27 @@ any running copy of the server, then starts it again. Don't run
 `start-poopwatch.bat` while the server is still running: the second copy can't
 bind port 8420.
 
+### Dashboard password
+
+By default the dashboard is reachable only from this computer. To open it from
+other devices on your home network:
+
+1. Set a password. It's stored in your OS credential store, not in the project:
+   ```
+   .venv\Scripts\python -m poopwatch set-password
+   ```
+2. Set `HOST=0.0.0.0` in `.env`. `serve` refuses to listen on the network until
+   a password is set.
+3. Restart the server. Browsers ask for a login. The username is `poopwatch`,
+   and the password is the one you set.
+
+To go back to local-only, run `.venv\Scripts\python -m poopwatch clear-password`
+and set `HOST` back to `127.0.0.1`.
+
+The password is sent over plain HTTP, so on a shared Wi-Fi network someone
+could read it. For encryption, put the dashboard behind Tailscale or a reverse
+proxy such as Caddy.
+
 Analysis needs Ollama running. The Ollama installer adds a Startup shortcut, so
 it starts at login. Delete the `Ollama.lnk` shortcut from `shell:startup` if you
 don't want that.
@@ -252,8 +273,9 @@ not consented to being filmed and analyzed. A few things follow from that:
 - Camera credentials are scrubbed from ffmpeg error output before it is logged
   or served, because ffmpeg echoes the RTSP URL — password included — in most
   of its error messages, and the dashboard displays those.
-- The server binds to `127.0.0.1` by default. Don't expose it to the internet;
-  it has no authentication.
+- The server binds to `127.0.0.1` by default, so only this machine can reach it.
+  To open it on your home network, set a dashboard password first (see
+  "Dashboard password" below). Don't expose it to the internet.
 - Frames of your camera's view are sent to the Anthropic API when stage 3 runs.
   Set `VERDICT_MODEL=ollama` if you would rather nothing left the machine.
 - Camera recording laws vary by jurisdiction, particularly where audio or a

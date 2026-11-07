@@ -203,8 +203,13 @@ def cmd_watch(args: argparse.Namespace) -> int:
 def cmd_serve(args: argparse.Namespace) -> int:
     import uvicorn
 
+    from . import auth
     from .server import app, pool
 
+    if not auth.is_loopback(config.server_host) and auth.password() is None:
+        print(BAD, "HOST is " + config.server_host + ", which opens the dashboard to your network.")
+        print("      Set a dashboard password first: python -m poopwatch set-password")
+        return 1
     if not args.no_watch:
         pool.start()
     url = "http://" + config.server_host + ":" + str(config.server_port)
@@ -273,6 +278,10 @@ def main(argv: list[str] | None = None) -> int:
     p_replay.add_argument("--notify", action="store_true",
                           help="actually send alerts (off by default)")
 
+    sub.add_parser("set-password",
+                   help="set the dashboard password (needed to open it on your network)")
+    sub.add_parser("clear-password", help="remove the dashboard password")
+
     args = parser.parse_args(argv)
     _setup_logging(args.verbose)
     config.ensure_dirs()
@@ -282,7 +291,40 @@ def main(argv: list[str] | None = None) -> int:
         "watch": cmd_watch,
         "serve": cmd_serve,
         "replay": cmd_replay,
+        "set-password": cmd_set_password,
+        "clear-password": cmd_clear_password,
     }[args.command](args)
+
+
+def cmd_set_password(args: argparse.Namespace) -> int:
+    import getpass
+
+    from . import auth, secrets
+
+    ok, detail = secrets.keyring_available()
+    if not ok:
+        print(BAD, "no OS credential store available here: " + detail)
+        return 1
+    first = getpass.getpass("New dashboard password: ")
+    if len(first) < 8:
+        print(BAD, "use at least 8 characters")
+        return 1
+    if getpass.getpass("Repeat it: ") != first:
+        print(BAD, "passwords did not match")
+        return 1
+    auth.set_password(first)
+    print(OK, "dashboard password saved (username: " + auth.USERNAME + ")")
+    return 0
+
+
+def cmd_clear_password(args: argparse.Namespace) -> int:
+    from . import auth
+
+    if auth.clear_password():
+        print(OK, "dashboard password removed; the dashboard is local-only again")
+    else:
+        print(WARN, "no dashboard password was set")
+    return 0
 
 
 if __name__ == "__main__":
