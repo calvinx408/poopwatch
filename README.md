@@ -3,6 +3,8 @@
 Watches a Reolink camera feed and works out whether a dog defecated on your
 property — and whether whoever was walking it picked the mess up.
 
+![PoopWatch dashboard](docs/dashboard-demo.png)
+
 It is built as a funnel, because running a vision model on 24/7 footage is both
 slow and expensive. Each stage only passes survivors to the next:
 

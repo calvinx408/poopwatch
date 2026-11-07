@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { evidenceUrl, getEvent, setReview } from '../api'
+import { deleteEvent, evidenceUrl, getEvent, setReview } from '../api'
 import { classify, formatOffset, formatPercent, formatTime, STAGE_LABELS } from '../format'
 
 const REVIEW_BUTTONS = [
@@ -8,7 +8,7 @@ const REVIEW_BUTTONS = [
   { key: 'handled', label: 'Handled' },
 ]
 
-export default function EventDetail({ eventId, onClose, onReviewed }) {
+export default function EventDetail({ eventId, onClose, onReviewed, onDeleted }) {
   const [event, setEvent] = useState(null)
   const [error, setError] = useState(null)
   const [frameIndex, setFrameIndex] = useState(0)
@@ -42,6 +42,21 @@ export default function EventDetail({ eventId, onClose, onReviewed }) {
     } catch (e) {
       setError(e.message)
     } finally {
+      setSaving(false)
+    }
+  }
+
+  async function remove() {
+    const ok = window.confirm(
+      'Delete this event and its clip and frames? This cannot be undone.',
+    )
+    if (!ok) return
+    setSaving(true)
+    try {
+      await deleteEvent(eventId)
+      onDeleted?.()
+    } catch (e) {
+      setError(e.message)
       setSaving(false)
     }
   }
@@ -172,6 +187,15 @@ export default function EventDetail({ eventId, onClose, onReviewed }) {
                     {b.label}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div className="drawer-review">
+              <span className="muted small">Danger zone</span>
+              <div className="btn-row">
+                <button className="btn btn-danger" disabled={saving} onClick={remove}>
+                  Delete event
+                </button>
               </div>
             </div>
           </>

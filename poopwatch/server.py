@@ -462,6 +462,13 @@ def get_event(event_id: int) -> dict:
     return event
 
 
+@app.delete("/api/events/{event_id}")
+def delete_event(event_id: int) -> dict:
+    if not store.delete_event(event_id):
+        raise HTTPException(status_code=404, detail="no such event")
+    return {"ok": True}
+
+
 @app.post("/api/events/{event_id}/review")
 def set_review(event_id: int, body: ReviewBody) -> dict:
     if body.review not in REVIEW_STATES:

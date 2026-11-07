@@ -201,6 +201,10 @@ export default function App() {
           eventId={selected}
           onClose={() => setSelected(null)}
           onReviewed={refresh}
+          onDeleted={() => {
+            setSelected(null)
+            refresh()
+          }}
         />
       )}
     </div>

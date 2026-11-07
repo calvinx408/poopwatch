@@ -36,6 +36,8 @@ const cameraQuery = (camera) => (camera ? `?camera=${encodeURIComponent(camera)}
 
 export const getEvent = (id) => request(`/api/events/${id}`)
 
+export const deleteEvent = (id) => request(`/api/events/${id}`, { method: 'DELETE' })
+
 export const setReview = (id, review) =>
   request(`/api/events/${id}/review`, {
     method: 'POST',

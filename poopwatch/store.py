@@ -117,6 +117,44 @@ class Store:
             raise ValueError("invalid review state: " + review)
         self.update_event(event_id, review=review)
 
+    def delete_event(self, event_id: int) -> bool:
+        """Remove an event row and its evidence files. Only paths under
+        evidence/ are touched, and the event's own folder is removed only
+        when it lives under evidence/events/."""
+        import shutil
+
+        event = self.get_event(event_id)
+        if not event:
+            return False
+
+        root = self.cfg.evidence_dir.resolve()
+        events_root = self.cfg.events_dir.resolve()
+        rels = [event.get("clip_path"), event.get("thumb_path"),
+                *(event.get("frame_paths") or [])]
+        folders = set()
+        for rel in rels:
+            if not rel:
+                continue
+            path = (self.cfg.evidence_dir / rel).resolve()
+            try:
+                path.relative_to(root)
+            except ValueError:
+                continue
+            path.unlink(missing_ok=True)
+            folders.add(path.parent)
+
+        for folder in folders:
+            try:
+                folder.relative_to(events_root)
+            except ValueError:
+                continue
+            if folder != events_root:
+                shutil.rmtree(folder, ignore_errors=True)
+
+        with self._conn() as c:
+            c.execute("DELETE FROM events WHERE id = ?", [event_id])
+        return True
+
     # ------------------------------------------------------------------ read
     def list_events(self, *, limit: int = 100, offset: int = 0,
                     only_violations: bool = False,
