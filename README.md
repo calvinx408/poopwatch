@@ -138,6 +138,11 @@ Windows account's credential store, which only exists once you're logged in.
 
 To stop the automatic start, delete that shortcut from the Startup folder.
 
+To restart after changing code, double-click `restart-poopwatch.bat`. It stops
+any running copy of the server, then starts it again. Don't run
+`start-poopwatch.bat` while the server is still running: the second copy can't
+bind port 8420.
+
 Analysis needs Ollama running. The Ollama installer adds a Startup shortcut, so
 it starts at login. Delete the `Ollama.lnk` shortcut from `shell:startup` if you
 don't want that.
