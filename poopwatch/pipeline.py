@@ -148,8 +148,8 @@ def _analyze(cam: CameraConfig, event_id: int, frames: list[Frame],
             store.update_event(
                 event_id, stage="gate_rejected", subject=gate.subject,
                 confidence=gate.confidence,
-                reasoning="Gate saw a " + gate.subject + " " + gate.posture
-                          + "; no defecation posture.",
+                reasoning="Good " + gate.subject + "! Just " + gate.posture
+                          + ", no squat in sight. Not today, champ.",
                 thumb_path=_thumb_rel(store, frames, -1, event_dir),
             )
             return store.get_event(event_id)

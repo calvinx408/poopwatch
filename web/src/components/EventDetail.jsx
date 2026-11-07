@@ -159,6 +159,12 @@ export default function EventDetail({ eventId, onClose, onReviewed, onDeleted })
                 <p>{event.reasoning}</p>
               </section>
             )}
+            {event.cleanup && !event.violation && (
+              <section className="drawer-note">
+                <h3>Good human</h3>
+                <p>Picked it up. Treat earned. 🦴 The dog approves.</p>
+              </section>
+            )}
             {event.cleanup_evidence && (
               <section className="drawer-note">
                 <h3>On cleanup</h3>

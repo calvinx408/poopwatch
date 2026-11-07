@@ -8,6 +8,8 @@ evidence/
 # --- local state ---
 .venv/
 models/
+# downloaded YOLO weights (ultralytics fetches these on first use)
+*.pt
 __pycache__/
 *.pyc
 
