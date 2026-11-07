@@ -66,14 +66,12 @@ class AiState:
     def trigger(self) -> tuple[bool, str]:
         """Whether to capture now, and which signal decided it.
 
-        Cameras without pet detection still usually have `people`. Preferring
-        people over raw motion matters enormously on a street-facing camera:
-        every passing car trips motion, but a dog being walked always has a
-        person attached to it. This cuts the trigger rate hugely without
-        losing the events we actually want.
+        A person is the trigger, and the dog check happens afterwards: the
+        local YOLO stage and the gate both look for a dog in the clip. The
+        camera's own dog/cat detection is not used, since it is unreliable on
+        these cameras. Motion is the fallback only when the camera has no
+        person detection.
         """
-        if "dog_cat" in self.supports:
-            return self.dog_cat, "camera AI (dog/cat)"
         if "people" in self.supports:
             return self.people, "camera AI (person)"
         return self.motion, "motion only"
@@ -239,9 +237,8 @@ class ReolinkClient:
         supports = {name for name, ok in
                     (("dog_cat", dog_ok), ("people", ppl_ok), ("vehicle", veh_ok)) if ok}
 
-        # Without a pet class we fall back to people, then to motion; fetch
-        # motion only when it is actually the deciding signal.
-        needs_motion = "dog_cat" not in supports and "people" not in supports
+        # Motion is only the trigger on cameras without person detection.
+        needs_motion = "people" not in supports
         motion = self.get_motion() if needs_motion else False
         if needs_motion:
             supports.add("motion")
