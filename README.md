@@ -90,8 +90,12 @@ ollama pull qwen2.5vl:7b
 # the dashboard
 cd web && npm install && npm run build && cd ..
 
-copy .env.example .env     # then fill it in
 ```
+
+Camera addresses, passwords, and alert settings are entered in the dashboard's
+**Settings** panel, so you don't need a `.env` file. Copy `.env.example` to
+`.env` only if you want Claude as the verdict model, which needs
+`ANTHROPIC_API_KEY`.
 
 Check everything before you rely on it:
 
@@ -120,6 +124,24 @@ camera or waiting involved.
 For UI development, `cd web && npm run dev` serves on :5173 and proxies data
 to the Python backend.
 
+### Starting it on Windows
+
+`start-poopwatch.bat` in the project folder starts the server in a minimized
+window and opens the dashboard in your browser. Double-click it to start the
+app by hand.
+
+To start it automatically when you log in, put a shortcut to the launcher in
+your Startup folder. Press `Win+R`, type `shell:startup`, and create a shortcut
+there that points to `start-poopwatch.bat` in the project folder. Startup
+shortcuts run at login, which is what you want: camera passwords live in your
+Windows account's credential store, which only exists once you're logged in.
+
+To stop the automatic start, delete that shortcut from the Startup folder.
+
+Analysis needs Ollama running. The Ollama installer adds a Startup shortcut, so
+it starts at login. Delete the `Ollama.lnk` shortcut from `shell:startup` if you
+don't want that.
+
 ## The dashboard
 
 Events are cards with a thumbnail and a verdict badge — red for *not picked up*,
@@ -127,6 +149,10 @@ green for *cleaned up*, muted for the ones a cheap stage filtered out. Each card
 is tagged with the camera it came from. Opening one gives you the clip, a
 scrubbable frame strip, the model's reasoning, and buttons to mark it correct, a
 false positive, or handled.
+
+To remove an event, open it and click **Delete event** in the "Danger zone"
+section at the bottom. This deletes its database row and its clip, frames, and
+thumbnail. It can't be undone.
 
 The header carries one pill per camera: a green dot means healthy, and clicking
 it stops or starts that camera on its own. With more than one camera configured,
@@ -137,8 +163,11 @@ funnel is throwing away, and whether it's throwing away too much.
 
 ## Configuration
 
-Everything lives in `.env` — see `.env.example` for the full annotated list.
-The settings worth knowing:
+Most settings are edited in the dashboard's **Settings** panel. Camera and alert
+settings are saved in `evidence/poopwatch.db`, and passwords go to the operating
+system's credential store (Windows Credential Manager, macOS Keychain, or Secret
+Service on Linux). `.env` is optional and overrides the saved settings. See
+`.env.example` for the full annotated list. The settings worth knowing:
 
 | Setting | Default | Notes |
 |---|---|---|

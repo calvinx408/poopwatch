@@ -201,14 +201,16 @@ def run_verdict(frames: Sequence[Frame], trigger_offset: float,
                 cfg: Config | None = None) -> Verdict:
     """Full determination over the event window."""
     cfg = cfg or config
-    picked = sample(frames, 16)
+    model = cfg.verdict_model.strip()
+    local = model.lower() in ("ollama", "local")
+    # The local model's context window fits about 8 frames; Claude takes 16.
+    picked = sample(frames, 8 if local else 16)
     prompt = VERDICT_PROMPT.format(frame_index=_frame_index(picked, trigger_offset))
     paths = [f.path for f in picked]
 
-    model = cfg.verdict_model.strip()
     log.info("verdict: %d frames via %s", len(paths), model)
 
-    if model.lower() in ("ollama", "local"):
+    if local:
         return ask_ollama(paths, prompt, Verdict, cfg)
     return ask_claude(paths, prompt, Verdict, model=model,
                       thinking=True, effort="high", max_tokens=8000)

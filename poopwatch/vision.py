@@ -35,6 +35,25 @@ def encode(path: Path) -> str:
     return base64.standard_b64encode(path.read_bytes()).decode("utf-8")
 
 
+# Full-size camera frames cost ~1500 tokens each, and Ollama's default context
+# is 4096 tokens, so a handful of frames is rejected with HTTP 400. Downscaling
+# keeps the detail the posture check needs at a fraction of the cost.
+OLLAMA_MAX_EDGE = 640
+OLLAMA_NUM_CTX = 16384
+
+
+def encode_small(path: Path, max_edge: int = OLLAMA_MAX_EDGE) -> str:
+    from io import BytesIO
+    from PIL import Image
+
+    with Image.open(path) as im:
+        im = im.convert("RGB")
+        im.thumbnail((max_edge, max_edge))
+        buf = BytesIO()
+        im.save(buf, "JPEG", quality=85)
+    return base64.standard_b64encode(buf.getvalue()).decode("utf-8")
+
+
 # --------------------------------------------------------------------- ollama
 def ollama_available(cfg: Config | None = None) -> tuple[bool, str]:
     cfg = cfg or config
@@ -65,10 +84,10 @@ def ask_ollama(images: Sequence[Path], prompt: str, schema: type[T],
     payload: dict[str, Any] = {
         "model": cfg.ollama_model,
         "prompt": prompt,
-        "images": [encode(p) for p in images],
+        "images": [encode_small(p) for p in images],
         "format": schema.model_json_schema(),
         "stream": False,
-        "options": {"temperature": 0},
+        "options": {"temperature": 0, "num_ctx": OLLAMA_NUM_CTX},
     }
     try:
         r = requests.post(cfg.ollama_url + "/api/generate", json=payload, timeout=timeout)
