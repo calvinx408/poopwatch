@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { deleteEvent, evidenceUrl, getEvent, setReview, setReviewNote } from '../api'
 import { classify, formatOffset, formatPercent, formatTime, STAGE_LABELS } from '../format'
 
@@ -13,23 +13,34 @@ export default function EventDetail({ eventId, onClose, onReviewed, onDeleted })
   const [error, setError] = useState(null)
   const [frameIndex, setFrameIndex] = useState(0)
   const [saving, setSaving] = useState(false)
+  // Notes save only when the Save button is pressed.
   const [note, setNote] = useState('')
-  const [noteSaved, setNoteSaved] = useState(false)
+  const [noteSaved, setNoteSaved] = useState(true)
+  const savedNoteRef = useRef('')
 
   useEffect(() => {
-    setNote(event?.review_note || '')
-    setNoteSaved(false)
+    const stored = event?.review_note || ''
+    savedNoteRef.current = stored
+    setNote(stored)
+    setNoteSaved(true)
   }, [event?.id])
 
   async function saveNote() {
-    if (!event || note === (event.review_note || '')) return
+    const text = note
+    if (text === savedNoteRef.current) return
     try {
-      const res = await setReviewNote(eventId, note)
-      setEvent(res.event)
+      const res = await setReviewNote(eventId, text)
+      savedNoteRef.current = text
+      setEvent((current) => (current && current.id === eventId ? res.event : current))
       setNoteSaved(true)
     } catch (e) {
       setError(e.message)
     }
+  }
+
+  function changeNote(text) {
+    setNote(text)
+    setNoteSaved(text === savedNoteRef.current)
   }
 
   useEffect(() => {
@@ -216,19 +227,25 @@ export default function EventDetail({ eventId, onClose, onReviewed, onDeleted })
 
             <div className="drawer-review">
               <span className="muted small">
-                Notes {noteSaved ? '· saved' : '· why is this right or wrong? (used to improve prompts)'}
+                Notes (why is this right or wrong? used to improve prompts) ·{' '}
+                {noteSaved ? 'saved' : 'unsaved changes'}
               </span>
               <textarea
                 className="review-note"
                 rows={3}
                 value={note}
                 placeholder="e.g. a bush looked like a dog; the person was only walking past"
-                onChange={(e) => {
-                  setNote(e.target.value)
-                  setNoteSaved(false)
-                }}
-                onBlur={saveNote}
+                onChange={(e) => changeNote(e.target.value)}
               />
+              <div className="btn-row">
+                <button
+                  className="btn"
+                  disabled={noteSaved}
+                  onClick={saveNote}
+                >
+                  Save note
+                </button>
+              </div>
             </div>
 
             <div className="drawer-review">
