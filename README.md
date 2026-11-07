@@ -181,6 +181,33 @@ Service on Linux). `.env` is optional and overrides the saved settings. See
 The optional free local detector needs `pip install -r requirements-local.txt`
 (this pulls in torch, ~2GB). Without it, stage 1 is simply skipped.
 
+## Running costs
+
+Ollama runs the gate and verdict for free. If you switch either stage to Claude,
+you pay Anthropic per token. These are list prices per million tokens, checked
+2026-11-07:
+
+| Model | Input | Output |
+|---|---|---|
+| Claude Haiku 5.5 (prompts up to 100K tokens) | $0.10 | $0.50 |
+| Claude Opus 5.5 | $4.00 | $20.00 |
+
+Images are billed as input tokens: each image costs about
+`ceil(width / 28) × ceil(height / 28)` tokens. Your 1280×960 camera frames are
+about 1,610 tokens each. A verdict sends 16 frames, and the gate sends 6.
+
+Estimated cost per event at that resolution:
+
+| Stage | Haiku 5.5 | Opus 5.5 |
+|---|---|---|
+| Gate (6 frames) | under $0.001 | about $0.05 |
+| Verdict (16 frames) | about $0.003 | about $0.13 |
+
+These are estimates. Actual cost depends on the number of frames, the output
+length, and how often the gate passes. Check the
+[current pricing page](https://platform.claude.com/docs/en/about-claude/pricing)
+before you rely on these numbers.
+
 ## Alerts
 
 Two independent channels, both optional, neither able to break the other:
