@@ -292,6 +292,15 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("set-password",
                    help="set the dashboard password (needed to open it on your network)")
     sub.add_parser("clear-password", help="remove the dashboard password")
+    sub.add_parser("export-false-positives",
+                   help="write false-positive events and their notes to a Markdown file")
+    p_save = sub.add_parser("save-case",
+                            help="save an event's frames as a gate test case")
+    p_save.add_argument("event_id", type=int)
+    p_save.add_argument("name")
+    p_save.add_argument("expect", choices=["pass", "reject"],
+                        help="pass = gate should see a dog defecating; reject = it should not")
+    sub.add_parser("regress", help="run the gate on every saved test case")
 
     args = parser.parse_args(argv)
     _setup_logging(args.verbose)
@@ -304,7 +313,80 @@ def main(argv: list[str] | None = None) -> int:
         "replay": cmd_replay,
         "set-password": cmd_set_password,
         "clear-password": cmd_clear_password,
+        "export-false-positives": cmd_export_false_positives,
+        "save-case": cmd_save_case,
+        "regress": cmd_regress,
     }[args.command](args)
+
+
+def cmd_save_case(args: argparse.Namespace) -> int:
+    from .regress import save_case
+
+    try:
+        dest = save_case(args.event_id, args.name, args.expect)
+    except ValueError as e:
+        print(BAD, str(e))
+        return 1
+    print(OK, "saved case " + args.name + " (" + args.expect + ") to " + str(dest))
+    return 0
+
+
+def cmd_regress(args: argparse.Namespace) -> int:
+    from .regress import run_cases
+
+    rows = run_cases()
+    if not rows:
+        print(WARN, "no cases yet; save one with save-case")
+        return 0
+    for name, expect, got, ok in rows:
+        print(OK if ok else BAD, "%-28s expected %-7s got %s" % (name, expect, got))
+    failed = sum(1 for r in rows if not r[3])
+    print(("all %d case(s) pass" % len(rows)) if not failed
+          else ("%d of %d case(s) FAILED" % (failed, len(rows))))
+    return 0 if not failed else 1
+
+
+def cmd_export_false_positives(args: argparse.Namespace) -> int:
+    """Write every false-positive event, with the reviewer's note, to Markdown.
+
+    The output is the input for the prompt-review step (scripts/prompt_review.md).
+    """
+    import sqlite3
+
+    from .settings_db import db_path
+
+    conn = sqlite3.connect(db_path())
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        "SELECT * FROM events WHERE review = 'false_positive' ORDER BY trigger_at"
+    ).fetchall()
+    conn.close()
+
+    from datetime import datetime
+
+    out_dir = config.evidence_dir / "review"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / "false_positives.md"
+    lines = ["# False positives", "",
+             "Each entry is an event a person marked as wrong. The note is the reason.", ""]
+    for r in rows:
+        when = datetime.fromtimestamp(r["trigger_at"]).strftime("%Y-%m-%d %H:%M:%S")
+        lines += [
+            f"## Event {r['id']} - {r['camera_slug']} - {when}",
+            f"- Stage reached: {r['stage']}",
+            f"- Model subject: {r['subject'] or 'unknown'}",
+            f"- Model reasoning: {r['reasoning'] or '(none)'}",
+            f"- Gate output: {r['gate_json'] or '(none)'}",
+            f"- Reviewer note: {r['review_note'] or '(no note yet)'}",
+            f"- Thumbnail: evidence/{r['thumb_path'] or '(none)'}",
+            "",
+        ]
+    out.write_text("\n".join(lines), encoding="utf-8")
+    missing = sum(1 for r in rows if not r["review_note"])
+    print(OK, str(len(rows)) + " false positive(s) written to " + str(out))
+    if missing:
+        print(WARN, str(missing) + " of them have no note yet; add one in the dashboard.")
+    return 0
 
 
 def cmd_set_password(args: argparse.Namespace) -> int:

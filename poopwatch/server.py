@@ -64,6 +64,10 @@ class ReviewBody(BaseModel):
     review: str
 
 
+class NoteBody(BaseModel):
+    note: str = ""
+
+
 class CameraBody(BaseModel):
     name: str
     host: str
@@ -426,32 +430,35 @@ def get_camera_snapshot(slug: str = PathParam(...)) -> FileResponse:
     settled = [p for p in segs if now - p.stat().st_mtime >= 5]
     if not settled:
         raise HTTPException(status_code=503, detail="camera not recording yet")
-    latest_seg = max(settled, key=lambda p: p.stat().st_mtime)
+    # A segment can be damaged when the camera drops its stream mid-write, so
+    # try the newest few and use the first one that decodes.
+    import subprocess
+
+    candidates = sorted(settled, key=lambda p: p.stat().st_mtime, reverse=True)[:3]
     out_jpg = config.evidence_dir / f"snapshot-{slug}.jpg"
-    try:
-        import subprocess
-        res = subprocess.run([
-            ffmpeg_bin(), "-nostdin", "-loglevel", "error", "-y",
-            "-i", str(latest_seg),
-            "-frames:v", "1", "-q:v", "3",
-            str(out_jpg),
-        ], capture_output=True, timeout=5)
-
+    last_error = "no usable segment"
+    for seg in candidates:
+        out_jpg.unlink(missing_ok=True)
+        try:
+            res = subprocess.run([
+                ffmpeg_bin(), "-nostdin", "-loglevel", "error", "-y",
+                "-i", str(seg),
+                "-frames:v", "1", "-q:v", "3",
+                str(out_jpg),
+            ], capture_output=True, timeout=5)
+        except subprocess.TimeoutExpired:
+            last_error = "extraction timed out"
+            continue
         if res.returncode != 0:
-            stderr = res.stderr.decode('utf-8', 'replace')[-300:]
-            log.warning("[%s] ffmpeg failed: %s", slug, stderr)
-            raise RuntimeError(f"ffmpeg rc={res.returncode}")
-        if not out_jpg.exists():
-            log.warning("[%s] ffmpeg produced no output file", slug)
-            raise RuntimeError("no output file")
-    except subprocess.TimeoutExpired:
-        log.warning("[%s] snapshot extraction timeout", slug)
-        raise HTTPException(status_code=504, detail="extraction timed out") from None
-    except Exception as e:
-        log.warning("[%s] snapshot extraction failed: %s", slug, e)
-        raise HTTPException(status_code=500, detail=str(e)) from e
+            last_error = f"ffmpeg rc={res.returncode}"
+            continue
+        if out_jpg.exists():
+            return FileResponse(out_jpg, media_type="image/jpeg")
+        last_error = "no output file"
 
-    return FileResponse(out_jpg, media_type="image/jpeg")
+    log.warning("[%s] snapshot failed after %d segment(s): %s",
+                slug, len(candidates), last_error)
+    raise HTTPException(status_code=500, detail=last_error)
 
 
 @app.get("/api/events")
@@ -484,6 +491,14 @@ def delete_event(event_id: int) -> dict:
     if not store.delete_event(event_id):
         raise HTTPException(status_code=404, detail="no such event")
     return {"ok": True}
+
+
+@app.post("/api/events/{event_id}/note")
+def set_review_note(event_id: int, body: NoteBody) -> dict:
+    if not store.get_event(event_id):
+        raise HTTPException(status_code=404, detail="no such event")
+    store.set_review_note(event_id, body.note)
+    return {"ok": True, "event": store.get_event(event_id)}
 
 
 @app.post("/api/events/{event_id}/review")

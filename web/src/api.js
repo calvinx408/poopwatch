@@ -95,3 +95,10 @@ export const putVerdictModel = (model) =>
     headers: JSON_HEADERS,
     body: JSON.stringify({ verdict_model: model }),
   })
+
+export const setReviewNote = (id, note) =>
+  request(`/api/events/${id}/note`, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ note }),
+  })

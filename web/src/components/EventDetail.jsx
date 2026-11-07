@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { deleteEvent, evidenceUrl, getEvent, setReview } from '../api'
+import { deleteEvent, evidenceUrl, getEvent, setReview, setReviewNote } from '../api'
 import { classify, formatOffset, formatPercent, formatTime, STAGE_LABELS } from '../format'
 
 const REVIEW_BUTTONS = [
@@ -13,6 +13,24 @@ export default function EventDetail({ eventId, onClose, onReviewed, onDeleted })
   const [error, setError] = useState(null)
   const [frameIndex, setFrameIndex] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [note, setNote] = useState('')
+  const [noteSaved, setNoteSaved] = useState(false)
+
+  useEffect(() => {
+    setNote(event?.review_note || '')
+    setNoteSaved(false)
+  }, [event?.id])
+
+  async function saveNote() {
+    if (!event || note === (event.review_note || '')) return
+    try {
+      const res = await setReviewNote(eventId, note)
+      setEvent(res.event)
+      setNoteSaved(true)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
 
   useEffect(() => {
     let active = true
@@ -194,6 +212,23 @@ export default function EventDetail({ eventId, onClose, onReviewed, onDeleted })
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="drawer-review">
+              <span className="muted small">
+                Notes {noteSaved ? '· saved' : '· why is this right or wrong? (used to improve prompts)'}
+              </span>
+              <textarea
+                className="review-note"
+                rows={3}
+                value={note}
+                placeholder="e.g. a bush looked like a dog; the person was only walking past"
+                onChange={(e) => {
+                  setNote(e.target.value)
+                  setNoteSaved(false)
+                }}
+                onBlur={saveNote}
+              />
             </div>
 
             <div className="drawer-review">

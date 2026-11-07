@@ -58,6 +58,8 @@ CREATE INDEX IF NOT EXISTS idx_events_camera ON events(camera_slug, trigger_at D
 MIGRATIONS: list[tuple[str, str]] = [
     ("camera_slug", "TEXT NOT NULL DEFAULT ''"),
     ("camera_name", "TEXT NOT NULL DEFAULT ''"),
+    # Free-text note from the reviewer, e.g. why an event is a false positive.
+    ("review_note", "TEXT NOT NULL DEFAULT ''"),
 ]
 
 
@@ -116,6 +118,9 @@ class Store:
         if review not in ("unreviewed", "confirmed", "false_positive", "handled"):
             raise ValueError("invalid review state: " + review)
         self.update_event(event_id, review=review)
+
+    def set_review_note(self, event_id: int, note: str) -> None:
+        self.update_event(event_id, review_note=note.strip()[:2000])
 
     def delete_event(self, event_id: int) -> bool:
         """Remove an event row and its evidence files. Only paths under
