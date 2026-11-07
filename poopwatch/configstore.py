@@ -61,17 +61,22 @@ def _is_loopback(host: str) -> bool:
 
 
 def writes_allowed() -> tuple[bool, str]:
-    """Settings writes are only safe on a loopback-bound server.
+    """Settings writes are only safe when the caller must be authenticated.
 
-    The dashboard has no authentication. If someone exposes it on a LAN or the
-    internet, an unauthenticated stranger must not be able to rewrite the
-    config or trigger mail from it. Opt out deliberately with
-    POOPWATCH_ALLOW_REMOTE_CONFIG=1 if you have put your own auth in front.
+    On a loopback-bound server only this machine can reach the dashboard. On
+    a network-bound server, writes are allowed once a dashboard password is
+    set, because the auth middleware then rejects every unauthenticated
+    request. Opt out deliberately with POOPWATCH_ALLOW_REMOTE_CONFIG=1 if you
+    have put your own auth in front.
     """
     if os.getenv("POOPWATCH_ALLOW_REMOTE_CONFIG", "").strip().lower() in (
         "1", "true", "yes", "on"
     ):
         return True, "explicitly allowed via POOPWATCH_ALLOW_REMOTE_CONFIG"
+    from . import auth
+
+    if auth.password() is not None:
+        return True, "dashboard password is set"
     if _is_loopback(config.server_host):
         return True, "server is bound to loopback"
     return False, (

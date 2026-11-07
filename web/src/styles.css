@@ -482,6 +482,9 @@ body {
 @media (max-width: 860px) {
   .statusbar {
     grid-template-columns: 1fr;
+    position: sticky;
+    top: 0;
+    z-index: 20;
   }
   .actions {
     justify-content: flex-start;

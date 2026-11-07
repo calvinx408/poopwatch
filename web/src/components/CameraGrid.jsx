@@ -17,6 +17,9 @@ function CameraSnapshot({ camera }) {
       }
     }, 15000)
     const interval = setInterval(() => {
+      // A failed frame must not stick: clearing the error on each refresh
+      // remounts the image, so the next attempt happens automatically.
+      setError(null)
       setTimestamp(Date.now())
     }, 8000)
     return () => {
