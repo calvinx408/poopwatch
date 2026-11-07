@@ -18,10 +18,21 @@ OK, BAD, WARN = "[ ok ]", "[FAIL]", "[warn]"
 
 
 def _setup_logging(verbose: bool) -> None:
+    from logging.handlers import TimedRotatingFileHandler
+
+    # Keep a log file under evidence/logs/: today's file, plus yesterday's
+    # after midnight. Older days are deleted by the rotation itself.
+    logs_dir = config.evidence_dir / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    file_handler = TimedRotatingFileHandler(
+        logs_dir / "poopwatch.log", when="midnight", backupCount=1,
+        encoding="utf-8")
+
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
         format="%(asctime)s %(levelname)-7s %(name)-18s %(message)s",
         datefmt="%H:%M:%S",
+        handlers=[logging.StreamHandler(), file_handler],
     )
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
