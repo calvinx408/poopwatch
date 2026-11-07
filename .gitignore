@@ -1,0 +1,16 @@
+# --- secrets and local config (NEVER commit) ---
+.env
+
+# --- recorded footage and the settings/event database ---
+# Contains video of real people and your saved configuration.
+evidence/
+
+# --- local state ---
+.venv/
+models/
+__pycache__/
+*.pyc
+
+# --- web build ---
+web/node_modules/
+web/dist/

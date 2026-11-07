@@ -1,0 +1,4 @@
+# Optional: free local dog detector (stage 1 of the funnel).
+# Installs torch (~2GB). Skip this and PoopWatch falls back to the
+# Haiku gate as stage 1 -- still cheap, just not free.
+ultralytics>=8.3.0

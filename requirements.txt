@@ -1,0 +1,10 @@
+anthropic>=2.6.0
+fastapi>=0.162.0
+uvicorn[standard]>=0.54.0
+requests>=2.32.0
+python-dotenv>=1.0.0
+pillow>=11.0.0
+# OS credential store for camera passwords (Windows Credential Manager,
+# macOS Keychain, Secret Service). Without it, passwords fall back to the
+# config file in plaintext and the UI warns you.
+keyring>=25.0.0
