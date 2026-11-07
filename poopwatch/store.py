@@ -160,7 +160,9 @@ class Store:
                     only_violations: bool = False,
                     include_rejected: bool = True,
                     camera: str | None = None) -> list[dict]:
-        where, params = [], []
+        # Events where the gate saw something other than a dog are not kept
+        # for the dashboard at all.
+        where, params = ["stage != 'not_dog'"], []
         if only_violations:
             where.append("violation = 1")
         if not include_rejected:

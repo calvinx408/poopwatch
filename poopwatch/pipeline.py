@@ -135,6 +135,13 @@ def _analyze(cam: CameraConfig, event_id: int, frames: list[Frame],
 
     if gate is not None:
         store.update_event(event_id, gate_json=gate.model_dump_json())
+        if gate.subject != "dog":
+            # Only dogs are of interest. Stop here so the paid verdict never runs.
+            log.info("[%s] event %d: not a dog (%s), skipping", cam.slug,
+                     event_id, gate.subject)
+            store.update_event(event_id, stage="not_dog", subject=gate.subject,
+                               confidence=gate.confidence)
+            return store.get_event(event_id)
         if not gate.likely_defecating:
             log.info("[%s] event %d: gate rejected (%s, %s)", cam.slug,
                      event_id, gate.subject, gate.posture)
