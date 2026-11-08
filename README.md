@@ -3,6 +3,10 @@
 Watches a Reolink camera feed and works out whether a dog defecated on your
 property, and whether whoever was walking it picked the mess up.
 
+Get a push notification on your phone the moment it happens, with a
+snapshot and a link to the event. It's free, with no account needed, and
+it works on iPhone and Android through [ntfy](https://ntfy.sh).
+
 ![PoopWatch dashboard](docs/dashboard-demo.png)
 
 It is built as a funnel, because running a vision model on 24/7 footage is both
@@ -245,18 +249,35 @@ length, and how often the gate passes. Check the
 [current pricing page](https://platform.claude.com/docs/en/about-claude/pricing)
 before you rely on these numbers.
 
-## Alerts
+## Alerts: push notifications to your phone
 
-Two independent channels, both optional, neither able to break the other:
+PoopWatch sends a push notification to your phone through
+[ntfy](https://ntfy.sh). It's free, needs no account, and works on iPhone and
+Android. Each alert includes a snapshot from the camera, and tapping it opens
+the event on your dashboard.
 
-- **ntfy**, set `NTFY_TOPIC` to something unguessable and subscribe to it in
-  the [ntfy](https://ntfy.sh) app. The snapshot is attached to the push.
-- **Email**, standard SMTP. For Gmail you need an app password, not your
-  account password.
+Setup takes about two minutes:
+1. Install the ntfy app and pick a topic name nobody else would guess, such as
+   a random word plus a few digits.
+2. In the dashboard's **Settings**, under **Alerts**, enter that topic in
+   **ntfy topic** and save.
+3. Subscribe to the same topic in the ntfy app.
 
-Alerts fire only on a genuine violation: subject is a dog, defecation was
-observed, and cleanup was not. That rule is computed in code
-(`Verdict.is_violation`), not left to the model, so it can't drift.
+Email works too. Enter the SMTP settings under **Alerts**. For Gmail you need an
+app password, not your account password.
+
+What you get:
+- **Poop left behind:** always sent. A dog defecated and nobody picked it up.
+- **Poop picked up:** a "Good human" message, when the owner cleans up. Optional.
+- **Dog walk-by:** a message when a dog walks past without pooping. Optional.
+- **Camera offline:** sent if a camera has no video for 10 minutes, and again
+  when it's back.
+
+Choose the optional alerts with the **Extra alerts** dropdown in Settings.
+
+To link alerts to the dashboard, enter the dashboard address under **Alerts**,
+for example `http://192.168.4.143:8420`. Your phone has to reach that address,
+so it works on your home Wi-Fi or over a private network such as Tailscale.
 
 ## Checking and improving detection
 
@@ -278,7 +299,8 @@ Improve the prompts from your feedback:
    ```
    .venv\Scripts\python -m poopwatch export-false-positives
    ```
-   This writes `evidenceeviewalse_positives.md`.
+   This writes `evidence
+eviewalse_positives.md`.
 3. Run Claude Code with `scripts\prompt_review.md` as its instructions. It
    proposes changes in `evidence
 eview\prompt_proposal.diff` and doesn't edit
