@@ -11,6 +11,8 @@ The username is fixed to `poopwatch`; only the password is secret.
 from __future__ import annotations
 
 import base64
+import hashlib
+import time
 import hmac
 import ipaddress
 
@@ -58,3 +60,39 @@ def check_basic(header: str | None, expected: str) -> bool:
     user_ok = hmac.compare_digest(user.encode(), USERNAME.encode())
     pass_ok = hmac.compare_digest(given.encode(), expected.encode())
     return user_ok and pass_ok
+
+
+# ---------------------------------------------------------------- sessions
+# A login form sets a signed cookie. Home-screen web apps on iPhone don't
+# show the browser's Basic-auth prompt, so the form is what they use.
+COOKIE_NAME = "poopwatch_session"
+SESSION_SECONDS = 30 * 24 * 3600
+
+
+def _session_key(expected: str) -> bytes:
+    # Derived from the password, so changing the password ends every session.
+    return hashlib.sha256(("poopwatch-session:" + expected).encode("utf-8")).digest()
+
+
+def make_session(expected: str) -> str:
+    expires = int(time.time()) + SESSION_SECONDS
+    sig = hmac.new(_session_key(expected), str(expires).encode(), hashlib.sha256)
+    return str(expires) + "." + sig.hexdigest()
+
+
+def valid_session(token: str | None, expected: str) -> bool:
+    if not token or "." not in token:
+        return False
+    expires_text, _, sig = token.partition(".")
+    try:
+        expires = int(expires_text)
+    except ValueError:
+        return False
+    if expires < time.time():
+        return False
+    good = hmac.new(_session_key(expected), expires_text.encode(), hashlib.sha256)
+    return hmac.compare_digest(sig, good.hexdigest())
+
+
+def check_password(given: str, expected: str) -> bool:
+    return hmac.compare_digest(given.encode("utf-8"), expected.encode("utf-8"))

@@ -43,21 +43,58 @@ app.add_middleware(
 )
 
 
+# The app shell and its code are public, so the login form always loads (a
+# home-screen web app on iPhone shows a blank page if the first request fails).
+# Everything that shows data or changes settings needs a session or Basic auth.
+PUBLIC_PATHS = ("/", "/index.html", "/api/login", "/api/logout", "/favicon.svg")
+PUBLIC_PREFIXES = ("/assets/",)
+
+
 @app.middleware("http")
 async def require_dashboard_password(request, call_next):
-    """With a dashboard password set, every request must send it. Without one,
-    this does nothing. CORS preflights pass through so the browser can send
-    the real request."""
+    """With a dashboard password set, data and settings need a login. Without
+    one, this does nothing. CORS preflights pass through so the browser can
+    send the real request."""
     expected = auth.password()
+    path = request.url.path
     if expected is None or request.method == "OPTIONS":
         return await call_next(request)
+    if path in PUBLIC_PATHS or path.startswith(PUBLIC_PREFIXES):
+        return await call_next(request)
     if auth.check_basic(request.headers.get("authorization"), expected):
+        return await call_next(request)
+    if auth.valid_session(request.cookies.get(auth.COOKIE_NAME), expected):
         return await call_next(request)
     return JSONResponse(
         status_code=401,
         content={"detail": "dashboard password required"},
-        headers={"WWW-Authenticate": 'Basic realm="PoopWatch"'},
     )
+
+
+class LoginBody(BaseModel):
+    password: str = ""
+
+
+@app.post("/api/login")
+def login(body: LoginBody) -> JSONResponse:
+    expected = auth.password()
+    if expected is None:
+        return JSONResponse({"ok": True, "required": False})
+    if not auth.check_password(body.password, expected):
+        return JSONResponse(status_code=401, content={"detail": "wrong password"})
+    response = JSONResponse({"ok": True, "required": True})
+    response.set_cookie(
+        auth.COOKIE_NAME, auth.make_session(expected),
+        max_age=auth.SESSION_SECONDS, httponly=True, samesite="strict", path="/",
+    )
+    return response
+
+
+@app.post("/api/logout")
+def logout() -> JSONResponse:
+    response = JSONResponse({"ok": True})
+    response.delete_cookie(auth.COOKIE_NAME, path="/")
+    return response
 
 
 class ReviewBody(BaseModel):

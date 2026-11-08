@@ -5,6 +5,7 @@ import EventDetail from './components/EventDetail'
 import SettingsPanel from './components/SettingsPanel'
 import StatusBar from './components/StatusBar'
 import CameraGrid from './components/CameraGrid'
+import LoginScreen from './components/LoginScreen'
 import './styles.css'
 
 const FILTERS = [
@@ -17,6 +18,7 @@ const FILTERS = [
 const POLL_MS = 5000
 
 export default function App() {
+  const [loginNeeded, setLoginNeeded] = useState(false)
   const [status, setStatus] = useState(null)
   const [events, setEvents] = useState([])
   const [eventsLoaded, setEventsLoaded] = useState(false)
@@ -88,6 +90,24 @@ export default function App() {
   const running = status?.watcher?.running
   const cameras = status?.cameras || []
   const multiCamera = cameras.length > 1
+
+  // Any request rejected for lack of a login brings up the login form.
+  useEffect(() => {
+    const onNeed = () => setLoginNeeded(true)
+    window.addEventListener('poopwatch-login-required', onNeed)
+    return () => window.removeEventListener('poopwatch-login-required', onNeed)
+  }, [])
+
+  if (loginNeeded) {
+    return (
+      <LoginScreen
+        onLoggedIn={() => {
+          setLoginNeeded(false)
+          refresh()
+        }}
+      />
+    )
+  }
 
   return (
     <div className="app">

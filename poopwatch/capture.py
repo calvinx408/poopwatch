@@ -203,6 +203,9 @@ class SegmentRecorder:
             ffmpeg_bin(),
             "-nostdin", "-loglevel", "error",
             "-rtsp_transport", "tcp",
+            # If the camera stops sending video, give up after 15s so the
+            # restart loop reconnects. Without this, ffmpeg can hang all night.
+            "-timeout", "15000000",
             "-use_wallclock_as_timestamps", "1",
             "-i", self.cam.rtsp_url,
             "-an",                      # audio is useless here and often absent

@@ -160,6 +160,17 @@ other devices on your home network:
 To go back to local-only, run `.venv\Scripts\python -m poopwatch clear-password`
 and set `HOST` back to `127.0.0.1`.
 
+If you forget the password, only someone at the PC can reset it, because the
+app has no "forgot password" link. Run these in the project folder:
+
+```
+.venv\Scripts\python -m poopwatch clear-password
+.venv\Scripts\python -m poopwatch set-password
+```
+
+Then restart the server. Every device will need the new password. If `HOST` is
+still `0.0.0.0`, the server won't start until a password is set.
+
 The password is sent over plain HTTP, so on a shared Wi-Fi network someone
 could read it. For encryption, put the dashboard behind Tailscale or a reverse
 proxy such as Caddy.

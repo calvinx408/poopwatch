@@ -3,6 +3,10 @@ const JSON_HEADERS = { 'Content-Type': 'application/json' }
 async function request(path, options) {
   const res = await fetch(path, options)
   if (!res.ok) {
+    if (res.status === 401) {
+      // The dashboard needs a password: the App shows the login form.
+      window.dispatchEvent(new Event('poopwatch-login-required'))
+    }
     let detail = res.statusText
     try {
       const body = await res.json()
@@ -106,3 +110,12 @@ export const setReviewNote = (id, note) =>
   })
 
 export const retryEvent = (id) => request(`/api/events/${id}/retry`, { method: 'POST' })
+
+export const loginDashboard = (password) =>
+  request('/api/login', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ password }),
+  })
+
+export const logoutDashboard = () => request('/api/logout', { method: 'POST' })
