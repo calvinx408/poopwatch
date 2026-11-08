@@ -239,3 +239,24 @@ def alert_walkby(trigger_epoch: float, frames: list[Path],
     pushed = send_ntfy(title, body, best, cfg, link=link)
     mailed = send_email(title, body, frames, cfg)
     return pushed or mailed
+
+
+def alert_camera_down(camera: str, minutes: int, cfg: Config | None = None) -> bool:
+    """A camera has produced no video for a while, even after restarts."""
+    cfg = cfg or config
+    title = "Camera offline"
+    body = (camera + " has not recorded video for " + str(minutes)
+            + " minutes. Check its Wi-Fi and power.")
+    pushed = send_ntfy(title, body, None, cfg)
+    mailed = send_email(title, body, [], cfg)
+    return pushed or mailed
+
+
+def alert_camera_back(camera: str, cfg: Config | None = None) -> bool:
+    """The camera is recording again after an offline alert."""
+    cfg = cfg or config
+    title = "Camera back online"
+    body = camera + " is recording again."
+    pushed = send_ntfy(title, body, None, cfg)
+    mailed = send_email(title, body, [], cfg)
+    return pushed or mailed

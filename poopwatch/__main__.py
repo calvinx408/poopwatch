@@ -209,6 +209,9 @@ def cmd_watch(args: argparse.Namespace) -> int:
         return 1
     _mark_interrupted()
     pool.start()
+    from .watchdog import start as start_watchdog
+
+    start_watchdog(pool)
     print("Watching " + str(len(config.cameras)) + " camera(s). Ctrl+C to stop.")
     for cam in config.cameras:
         print("  - " + cam.label)
@@ -234,6 +237,9 @@ def cmd_serve(args: argparse.Namespace) -> int:
     _mark_interrupted()
     if not args.no_watch:
         pool.start()
+        from .watchdog import start as start_watchdog
+
+        start_watchdog(pool)
     url = "http://" + config.server_host + ":" + str(config.server_port)
     print("PoopWatch dashboard -> " + url)
     print("  " + str(len(config.cameras)) + " camera(s) configured")
