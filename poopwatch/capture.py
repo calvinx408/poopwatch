@@ -155,14 +155,16 @@ class SegmentRecorder:
 
     def stop(self) -> None:
         self._stop.set()
+        # A stalled camera stream can keep ffmpeg from exiting, so don't wait
+        # long: kill it, so the disable button answers quickly.
         if self._proc and self._proc.poll() is None:
-            self._proc.terminate()
+            self._proc.kill()
             try:
-                self._proc.wait(timeout=5)
+                self._proc.wait(timeout=2)
             except subprocess.TimeoutExpired:
-                self._proc.kill()
+                pass
         if self._thread:
-            self._thread.join(timeout=10)
+            self._thread.join(timeout=3)
 
     @property
     def running(self) -> bool:

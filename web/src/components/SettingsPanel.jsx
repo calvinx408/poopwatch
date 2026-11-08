@@ -33,6 +33,49 @@ const blankCamera = () => ({
   _new: true,
 })
 
+// A dropdown with checkboxes: click to open, tick any number of options.
+function MultiSelect({ options, value, onChange, disabled, placeholder }) {
+  const [open, setOpen] = useState(false)
+  const chosen = options.filter((o) => value.includes(o.value))
+  const summary = chosen.length
+    ? chosen.map((o) => o.label).join(', ')
+    : placeholder
+
+  return (
+    <div className="multiselect">
+      <button
+        type="button"
+        className="multiselect-button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={disabled}
+      >
+        <span>{summary}</span>
+        <span aria-hidden="true">{open ? '▴' : '▾'}</span>
+      </button>
+      {open && (
+        <div className="multiselect-menu">
+          {options.map((o) => (
+            <label key={o.value} className="multiselect-option">
+              <input
+                type="checkbox"
+                checked={value.includes(o.value)}
+                onChange={(e) =>
+                  onChange(
+                    e.target.checked
+                      ? [...value, o.value]
+                      : value.filter((v) => v !== o.value),
+                  )
+                }
+              />
+              <span>{o.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function CameraRow({ cam, index, choices, onChange, onRemove, editable }) {
   const [test, setTest] = useState(null)
   const [testing, setTesting] = useState(false)
@@ -528,6 +571,26 @@ export default function SettingsPanel({ onClose, onSaved }) {
                 disabled={!editable}
               />
               <small className="muted">Subscribe to this topic in the ntfy phone app</small>
+            </label>
+            <label>
+              <span>Extra alerts</span>
+              <MultiSelect
+                options={[
+                  { value: 'good', label: 'Poop picked up' },
+                  { value: 'walkby', label: 'Dog walk-by' },
+                ]}
+                value={[
+                  ...(alerts.notify_good !== false ? ['good'] : []),
+                  ...(alerts.notify_walkbys === true ? ['walkby'] : []),
+                ]}
+                onChange={(picked) => {
+                  patch('alerts', 'notify_good', picked.includes('good'))
+                  patch('alerts', 'notify_walkbys', picked.includes('walkby'))
+                }}
+                disabled={!editable}
+                placeholder="None"
+              />
+              <small className="muted">Poop left behind always sends.</small>
             </label>
             <label>
               <span>Alert email to</span>

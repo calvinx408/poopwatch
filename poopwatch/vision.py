@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import json
+import time
 import logging
 from pathlib import Path
 from typing import Any, Sequence, TypeVar
@@ -55,8 +56,24 @@ def encode_small(path: Path, max_edge: int = OLLAMA_MAX_EDGE) -> str:
 
 
 # --------------------------------------------------------------------- ollama
+_ollama_cache: dict = {}
+_OLLAMA_CACHE_SECONDS = 30
+
+
 def ollama_available(cfg: Config | None = None) -> tuple[bool, str]:
+    """Cached for 30s: the dashboard polls the status endpoint every few seconds,
+    and each uncached check can take several seconds on Windows."""
     cfg = cfg or config
+    key = cfg.ollama_url
+    cached = _ollama_cache.get(key)
+    if cached and time.time() - cached[0] < _OLLAMA_CACHE_SECONDS:
+        return cached[1]
+    result = _check_ollama(cfg)
+    _ollama_cache[key] = (time.time(), result)
+    return result
+
+
+def _check_ollama(cfg: Config) -> tuple[bool, str]:
     try:
         r = requests.get(cfg.ollama_url + "/api/version", timeout=4)
         r.raise_for_status()

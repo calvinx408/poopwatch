@@ -152,6 +152,10 @@ def _analyze(cam: CameraConfig, event_id: int, frames: list[Frame],
                           + ", no squat in sight. Not today, champ.",
                 thumb_path=_thumb_rel(store, frames, -1, event_dir),
             )
+            if notify_on_violation and cfg.notify_walkbys and gate.subject == "dog":
+                # A dog walked past without pooping; alert only if asked to.
+                evidence = [f.path for f in sample(frames, 4)]
+                notify.alert_walkby(trigger_epoch, evidence, cfg, camera=cam.name)
             return store.get_event(event_id)
         log.info("[%s] event %d: gate passed, escalating to verdict",
                  cam.slug, event_id)
@@ -195,6 +199,13 @@ def _analyze(cam: CameraConfig, event_id: int, frames: list[Frame],
         ok = notify.alert(verdict, trigger_epoch, evidence, cfg, camera=cam.name)
         store.update_event(event_id, notified=int(ok),
                            stage="notified" if ok else "verdict")
+    elif (notify_on_violation and cfg.notify_good and verdict.subject == "dog"
+          and verdict.defecation_occurred and verdict.cleanup_occurred):
+        # A good outcome: the dog went and the owner cleaned up. Tell them so.
+        evidence = [f.path for f in sample(frames, 4)]
+        if thumb:
+            evidence.insert(0, cfg.evidence_dir / thumb)
+        notify.alert_good(trigger_epoch, evidence, cfg, camera=cam.name)
 
     return store.get_event(event_id)
 
@@ -255,3 +266,32 @@ def replay_clip(clip: Path, store: Store, cfg: Config | None = None,
         notify.alert(verdict, trigger_epoch, [f.path for f in frames[:4]], cfg,
                      camera="replay")
     return store.get_event(event_id)
+
+
+def reprocess_event(event_id: int, cfg: Config | None = None) -> dict | None:
+    """Run stages 1-3 again on an event's saved frames, e.g. after a detector or
+    prompt change. Does not capture new footage and does not send alerts."""
+    cfg = cfg or config
+    store = Store(cfg)
+    event = store.get_event(event_id)
+    if not event:
+        raise ValueError("no such event: " + str(event_id))
+    cam = cfg.camera(event["camera_slug"])
+    if cam is None:
+        raise ValueError("camera " + event["camera_slug"] + " is no longer configured")
+
+    event_dir = cfg.evidence_dir / Path(event["clip_path"]).parent
+    trigger_epoch = event["trigger_at"]
+    trigger_offset = float(cfg.pre_roll)
+    paths = sorted((event_dir / "frames").glob("*.jpg"))
+    if not paths:
+        raise ValueError("event " + str(event_id) + " has no saved frames")
+    # Frames were extracted at 1 fps from the start of the clip.
+    frames = [
+        Frame(path=p, offset_s=float(i), epoch=trigger_epoch - trigger_offset + i)
+        for i, p in enumerate(paths)
+    ]
+    log.info("[%s] event %d: reprocessing %d frames", cam.slug, event_id, len(frames))
+    with _analysis_slots:
+        return _analyze(cam, event_id, frames, trigger_offset, trigger_epoch,
+                        event_dir, store, cfg, notify_on_violation=False)

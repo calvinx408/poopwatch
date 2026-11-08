@@ -9,6 +9,7 @@ export const STAGE_LABELS = {
   verdict_refused: 'Model declined',
   verdict: 'Analyzed',
   notified: 'Alert sent',
+  interrupted: 'Interrupted by restart',
 }
 
 const FILTERED_STAGES = new Set(['no_dog', 'gate_rejected'])

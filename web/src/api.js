@@ -20,12 +20,14 @@ export const getStatus = () => request('/api/status')
 export function getEvents({
   onlyViolations = false,
   includeRejected = true,
+  walkbys = false,
   limit = 60,
   camera = null,
 } = {}) {
   const params = new URLSearchParams({
     only_violations: String(onlyViolations),
     include_rejected: String(includeRejected),
+    walkbys: String(walkbys),
     limit: String(limit),
   })
   if (camera) params.set('camera', camera)
@@ -102,3 +104,5 @@ export const setReviewNote = (id, note) =>
     headers: JSON_HEADERS,
     body: JSON.stringify({ note }),
   })
+
+export const retryEvent = (id) => request(`/api/events/${id}/retry`, { method: 'POST' })

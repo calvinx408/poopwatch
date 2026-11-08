@@ -160,6 +160,8 @@ def get_settings() -> dict:
                 "database" if config.smtp_password else "none"
             ),
             "email_to": config.alert_email_to,
+            "notify_good": config.notify_good,
+            "notify_walkbys": config.notify_walkbys,
         },
         "cameras": [_camera_view(c) for c in config.cameras],
         "choices": {
@@ -452,6 +454,11 @@ def get_camera_snapshot(slug: str = PathParam(...)) -> FileResponse:
         if res.returncode != 0:
             last_error = f"ffmpeg rc={res.returncode}"
             continue
+        # ffmpeg can exit 0 yet still report "error while decoding": the frame
+        # is then partly corrupt (colour stripes), so treat it as a bad segment.
+        if res.stderr.strip():
+            last_error = "segment has decoding errors"
+            continue
         if out_jpg.exists():
             return FileResponse(out_jpg, media_type="image/jpeg")
         last_error = "no output file"
@@ -465,6 +472,7 @@ def get_camera_snapshot(slug: str = PathParam(...)) -> FileResponse:
 def list_events(limit: int = 60, offset: int = 0,
                 only_violations: bool = False,
                 include_rejected: bool = True,
+                walkbys: bool = False,
                 camera: str | None = None) -> dict:
     limit = max(1, min(limit, 200))
     if camera and not config.camera(camera) and camera != "replay":
@@ -473,6 +481,7 @@ def list_events(limit: int = 60, offset: int = 0,
         limit=limit, offset=offset,
         only_violations=only_violations,
         include_rejected=include_rejected,
+        walkbys=walkbys,
         camera=camera,
     )
     return {"events": events, "limit": limit, "offset": offset, "camera": camera}
@@ -484,6 +493,37 @@ def get_event(event_id: int) -> dict:
     if not event:
         raise HTTPException(status_code=404, detail="no such event")
     return event
+
+
+RETRYABLE_STAGES = ("interrupted", "capture_failed")
+
+
+@app.post("/api/events/{event_id}/retry")
+def retry_event(event_id: int) -> dict:
+    """Capture again for an event whose analysis never finished. The old card
+    is replaced by a new event at the same trigger time."""
+    from .pipeline import process_trigger
+
+    event = store.get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="no such event")
+    if event["stage"] not in RETRYABLE_STAGES:
+        raise HTTPException(
+            status_code=409,
+            detail="only interrupted or failed captures can be retried",
+        )
+    cam = config.camera(event["camera_slug"])
+    if not cam:
+        raise HTTPException(status_code=409,
+                            detail="camera " + event["camera_slug"] + " is not configured")
+    trigger_epoch = event["trigger_at"]
+    store.delete_event(event_id)
+    threading.Thread(
+        target=process_trigger,
+        args=(cam, trigger_epoch, store, config),
+        daemon=True,
+    ).start()
+    return {"ok": True}
 
 
 @app.delete("/api/events/{event_id}")

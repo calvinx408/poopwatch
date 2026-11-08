@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { deleteEvent, evidenceUrl, getEvent, setReview, setReviewNote } from '../api'
+import { deleteEvent, evidenceUrl, getEvent, retryEvent, setReview, setReviewNote } from '../api'
 import { classify, formatOffset, formatPercent, formatTime, STAGE_LABELS } from '../format'
 
 const REVIEW_BUTTONS = [
@@ -71,6 +71,18 @@ export default function EventDetail({ eventId, onClose, onReviewed, onDeleted })
     } catch (e) {
       setError(e.message)
     } finally {
+      setSaving(false)
+    }
+  }
+
+  async function retry() {
+    setSaving(true)
+    try {
+      await retryEvent(eventId)
+      // The old card is replaced by a new capture; close this one and refresh.
+      onDeleted?.()
+    } catch (e) {
+      setError(e.message)
       setSaving(false)
     }
   }
@@ -251,6 +263,11 @@ export default function EventDetail({ eventId, onClose, onReviewed, onDeleted })
             <div className="drawer-review">
               <span className="muted small">Danger zone</span>
               <div className="btn-row">
+                {['interrupted', 'capture_failed'].includes(event.stage) && (
+                  <button className="btn btn-primary" disabled={saving} onClick={retry}>
+                    Retry capture
+                  </button>
+                )}
                 <button className="btn btn-danger" disabled={saving} onClick={remove}>
                   Delete event
                 </button>

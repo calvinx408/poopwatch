@@ -164,10 +164,14 @@ class Store:
     def list_events(self, *, limit: int = 100, offset: int = 0,
                     only_violations: bool = False,
                     include_rejected: bool = True,
+                    walkbys: bool = False,
                     camera: str | None = None) -> list[dict]:
         # Events where the gate saw something other than a dog are not kept
         # for the dashboard at all.
         where, params = ["stage != 'not_dog'"], []
+        if walkbys:
+            # A dog the gate saw but did not see squatting: it walked past.
+            where.append("stage = 'gate_rejected' AND subject = 'dog'")
         if only_violations:
             where.append("violation = 1")
         if not include_rejected:
@@ -183,6 +187,17 @@ class Store:
                 [*params, limit, offset],
             ).fetchall()
         return [self._hydrate(r) for r in rows]
+
+    def mark_interrupted(self) -> int:
+        """Call once at startup, before any analysis runs. Events still in an
+        in-progress stage were left behind by a restart: their worker thread
+        died with the old process, so they would otherwise stay there forever."""
+        with self._conn() as c:
+            return c.execute(
+                "UPDATE events SET stage = 'interrupted', "
+                "error = 'the server restarted before analysis finished' "
+                "WHERE stage IN ('triggered', 'captured')"
+            ).rowcount
 
     def get_event(self, event_id: int) -> dict | None:
         with self._conn() as c:

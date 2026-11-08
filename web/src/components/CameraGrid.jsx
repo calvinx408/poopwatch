@@ -1,8 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
-import { cameraSnapshotUrl } from '../api'
+import { cameraSnapshotUrl, startWatcher, stopWatcher } from '../api'
 
 function CameraSnapshot({ camera }) {
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+
+  async function toggleCamera(cam) {
+    setBusy(true)
+    try {
+      if (cam.state === 'stopped') await startWatcher(cam.slug)
+      else await stopWatcher(cam.slug)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setBusy(false)
+    }
+  }
   const [timestamp, setTimestamp] = useState(Date.now())
   const [loading, setLoading] = useState(true)
   const loadedRef = useRef(false)
@@ -74,7 +87,16 @@ function CameraSnapshot({ camera }) {
         )}
       </div>
       <div className="camera-info">
-        <h3>{camera.name}</h3>
+        <div className="camera-title">
+          <h3>{camera.name}</h3>
+          <button
+            className={`btn ${camera.state === 'stopped' ? 'btn-primary' : ''}`}
+            onClick={() => toggleCamera(camera)}
+            disabled={busy}
+          >
+            {camera.state === 'stopped' ? 'Enable' : 'Disable'}
+          </button>
+        </div>
         <p className={`camera-state camera-state-${camera.state}`}>
           <span className={`dot dot-${camera.state === 'live' ? 'ok' : camera.state === 'connecting' ? 'warn' : 'bad'}`} />
           {camera.state_detail}
@@ -88,11 +110,13 @@ function CameraSnapshot({ camera }) {
 }
 
 export default function CameraGrid({ cameras, visible }) {
-  if (!visible || cameras.length === 0) return null
+  // Disabled cameras are hidden here. Re-enable them with their pill in the header.
+  const active = cameras.filter((cam) => cam.state !== 'stopped')
+  if (!visible || active.length === 0) return null
 
   return (
     <div className="camera-grid">
-      {cameras.map((cam) => (
+      {active.map((cam) => (
         <CameraSnapshot key={cam.slug} camera={cam} />
       ))}
     </div>

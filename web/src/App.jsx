@@ -10,6 +10,7 @@ import './styles.css'
 const FILTERS = [
   { key: 'violations', label: 'Not picked up' },
   { key: 'analyzed', label: 'Analyzed' },
+  { key: 'walkbys', label: 'Walk-bys' },
   { key: 'all', label: 'Everything' },
 ]
 
@@ -18,6 +19,7 @@ const POLL_MS = 5000
 export default function App() {
   const [status, setStatus] = useState(null)
   const [events, setEvents] = useState([])
+  const [eventsLoaded, setEventsLoaded] = useState(false)
   const [filter, setFilter] = useState('analyzed')
   const [cameraFilter, setCameraFilter] = useState(null)
   const [selected, setSelected] = useState(null)
@@ -33,21 +35,23 @@ export default function App() {
 
   const refresh = useCallback(async () => {
     const { filter: f, cameraFilter: cam } = filters.current
-    try {
-      const [s, e] = await Promise.all([
-        getStatus(),
-        getEvents({
-          onlyViolations: f === 'violations',
-          includeRejected: f === 'all',
-          camera: cam,
-        }),
-      ])
-      setStatus(s)
-      setEvents(e.events)
-      setError(null)
-    } catch (err) {
-      setError(err.message)
-    }
+    // Events and status load independently, so a slow status check never
+    // holds up the event list.
+    getEvents({
+      onlyViolations: f === 'violations',
+      includeRejected: f === 'all' || f === 'walkbys',
+      walkbys: f === 'walkbys',
+      camera: cam,
+    })
+      .then((e) => {
+        setEvents(e.events)
+        setEventsLoaded(true)
+        setError(null)
+      })
+      .catch((err) => setError(err.message))
+    getStatus()
+      .then((s) => setStatus(s))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -170,7 +174,11 @@ export default function App() {
         <span className="muted small">{events.length} shown</span>
       </nav>
 
-      {events.length === 0 ? (
+      {events.length === 0 && !eventsLoaded ? (
+        <div className="empty">
+          <h2>Loading events…</h2>
+        </div>
+      ) : events.length === 0 ? (
         <div className="empty">
           <h2>No events yet</h2>
           <p className="muted">

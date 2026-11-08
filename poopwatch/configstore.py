@@ -37,6 +37,8 @@ ALERT_FIELDS: dict[str, type] = {
     "smtp_port": int,
     "smtp_user": str,
     "email_to": str,
+    "notify_good": bool,
+    "notify_walkbys": bool,
 }
 
 GATE_BACKENDS = ("ollama", "haiku", "off")

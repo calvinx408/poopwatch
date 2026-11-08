@@ -322,6 +322,12 @@ class Config:
     smtp_password: str = field(default_factory=_smtp_password)
     alert_email_to: str = field(
         default_factory=lambda: _str("ALERT_EMAIL_TO", "alerts", "email_to"))
+    # Send a "Good human!" alert when a dog defecates and the owner cleans up.
+    notify_good: bool = field(
+        default_factory=lambda: _bool("NOTIFY_GOOD", "alerts", "notify_good", True))
+    # Send an alert when a dog walks past without pooping. Off by default: walk-bys are frequent.
+    notify_walkbys: bool = field(
+        default_factory=lambda: _bool("NOTIFY_WALKBYS", "alerts", "notify_walkbys", False))
 
     # Server
     server_host: str = field(

@@ -73,7 +73,7 @@ class CameraWatcher:
         self._stop.set()
         self.recorder.stop()
         if self._thread:
-            self._thread.join(timeout=10)
+            self._thread.join(timeout=3)
         self.status.running = False
         log.info("[%s] stopped", self.cam.slug)
 

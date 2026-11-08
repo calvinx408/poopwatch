@@ -191,6 +191,15 @@ def cmd_probe(args: argparse.Namespace) -> int:
     return 1 if failures else 0
 
 
+def _mark_interrupted() -> None:
+    """Events left in progress by a previous run can't finish any more."""
+    from .store import Store
+
+    n = Store(config).mark_interrupted()
+    if n:
+        print(WARN, str(n) + " event(s) were interrupted by a restart and were marked as such")
+
+
 def cmd_watch(args: argparse.Namespace) -> int:
     from .watcher import WatcherPool
 
@@ -198,6 +207,7 @@ def cmd_watch(args: argparse.Namespace) -> int:
     if not config.cameras:
         print(BAD, "no cameras configured")
         return 1
+    _mark_interrupted()
     pool.start()
     print("Watching " + str(len(config.cameras)) + " camera(s). Ctrl+C to stop.")
     for cam in config.cameras:
@@ -221,6 +231,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
         print(BAD, "HOST is " + config.server_host + ", which opens the dashboard to your network.")
         print("      Set a dashboard password first: python -m poopwatch set-password")
         return 1
+    _mark_interrupted()
     if not args.no_watch:
         pool.start()
     url = "http://" + config.server_host + ":" + str(config.server_port)
@@ -301,6 +312,9 @@ def main(argv: list[str] | None = None) -> int:
     p_save.add_argument("expect", choices=["pass", "reject"],
                         help="pass = gate should see a dog defecating; reject = it should not")
     sub.add_parser("regress", help="run the gate on every saved test case")
+    p_re = sub.add_parser("reprocess-event",
+                          help="re-run detector, gate, and verdict on an event's saved frames")
+    p_re.add_argument("event_id", type=int)
 
     args = parser.parse_args(argv)
     _setup_logging(args.verbose)
@@ -316,6 +330,7 @@ def main(argv: list[str] | None = None) -> int:
         "export-false-positives": cmd_export_false_positives,
         "save-case": cmd_save_case,
         "regress": cmd_regress,
+        "reprocess-event": cmd_reprocess_event,
     }[args.command](args)
 
 
@@ -328,6 +343,21 @@ def cmd_save_case(args: argparse.Namespace) -> int:
         print(BAD, str(e))
         return 1
     print(OK, "saved case " + args.name + " (" + args.expect + ") to " + str(dest))
+    return 0
+
+
+def cmd_reprocess_event(args: argparse.Namespace) -> int:
+    from .pipeline import reprocess_event
+
+    try:
+        event = reprocess_event(args.event_id)
+    except ValueError as e:
+        print(BAD, str(e))
+        return 1
+    stage = event["stage"] if event else "unknown"
+    print(OK, "event %d now at stage: %s" % (args.event_id, stage))
+    if event and event.get("reasoning"):
+        print("      " + event["reasoning"])
     return 0
 
 

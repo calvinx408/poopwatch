@@ -118,6 +118,24 @@ def alert(verdict, trigger_epoch: float, frames: list[Path],
     return pushed or mailed
 
 
+def alert_good(trigger_epoch: float, frames: list[Path],
+               cfg: Config | None = None, *, camera: str = "") -> bool:
+    """Positive alert: the dog went and the owner picked it up. Same channels as
+    a violation, with a happier message."""
+    from datetime import datetime
+
+    cfg = cfg or config
+    when = datetime.fromtimestamp(trigger_epoch).strftime("%I:%M %p").lstrip("0")
+    where = (camera + " ") if camera else ""
+    title = "Good human!"
+    body = (where + "at " + when + ": the dog did its business and the human "
+            "picked it up. Treat earned.")
+    best = frames[0] if frames else None
+    pushed = send_ntfy(title, body, best, cfg)
+    mailed = send_email(title, body, frames, cfg)
+    return pushed or mailed
+
+
 def test_ntfy(topic: str, server: str) -> dict:
     """Send a real push to `topic`. Returns a step result for the UI."""
     if not topic:
@@ -191,3 +209,19 @@ def configured_channels(cfg: Config | None = None) -> list[str]:
     if cfg.smtp_host and cfg.smtp_user and cfg.alert_email_to:
         out.append("email:" + cfg.alert_email_to)
     return out
+
+
+def alert_walkby(trigger_epoch: float, frames: list[Path],
+                 cfg: Config | None = None, *, camera: str = "") -> bool:
+    """A dog walked past without pooping. Sent only when the user asks for it."""
+    from datetime import datetime
+
+    cfg = cfg or config
+    when = datetime.fromtimestamp(trigger_epoch).strftime("%I:%M %p").lstrip("0")
+    where = (camera + " ") if camera else ""
+    title = "Dog walk-by"
+    body = where + "at " + when + ": a dog walked past without pooping."
+    best = frames[0] if frames else None
+    pushed = send_ntfy(title, body, best, cfg)
+    mailed = send_email(title, body, frames, cfg)
+    return pushed or mailed
