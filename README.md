@@ -17,7 +17,7 @@ slow and expensive. Each stage only passes survivors to the next:
 | 0. Camera AI | Reolink's own on-device `dog_cat` detector fires | free |
 | 1. Local detector | YOLO11 confirms a dog is actually in frame *(optional)* | free |
 | 2. Gate | A local VLM screens the frames for a squatting posture | free via Ollama |
-| 3. Verdict | Claude judges defecation, handler presence, and cleanup | only on gate hits |
+| 3. Verdict | A vision model judges defecation, handler presence, and cleanup (Ollama or Claude) | only on gate hits |
 
 In practice the camera's own detector eliminates almost everything, the gate
 eliminates the dogs that were merely sniffing, and the paid stage runs a handful
@@ -25,26 +25,22 @@ of times a day at most. Set `VERDICT_MODEL=ollama` to run it entirely free.
 
 ## Cameras
 
-Configure as many as you like. Each entry is a host + channel pair, which covers
-both common setups:
+Add your cameras in the dashboard's **Settings** panel. Each camera needs a name,
+an IP address, a channel (0 for a standalone camera, or the channel number on an
+NVR), and a password. You can add as many cameras as you like.
 
-```ini
-# two standalone cameras, different hosts
-CAMERA_1_NAME=front yard
-CAMERA_1_HOST=192.168.1.50
-CAMERA_2_NAME=driveway
-CAMERA_2_HOST=192.168.1.51
+To add a camera:
+1. Open the dashboard and click **Settings**. Find the **Cameras** section.
+2. Click **Add camera** and fill in its name (for example `front yard`), its IP
+   address, and its channel. Use `0` for a standalone camera.
+3. Enter the camera's login password, then click **Test connection**. It checks
+   that the camera answers.
+4. Choose a **Stream**: `main` for full resolution, or `sub` for less data.
+5. Click **Save and close**. The camera starts recording right away.
 
-# or two channels on one NVR, same host
-CAMERA_2_NAME=side gate
-CAMERA_2_HOST=192.168.1.50
-CAMERA_2_CHANNEL=1
-```
-
-Credentials fall back to the shared `REOLINK_USER` / `REOLINK_PASSWORD`, so an
-NVR only needs them stated once. The camera numbers are discovered from the
-environment rather than scanned up to a fixed limit, so there is no cap and the
-numbers need not be contiguous.
+Passwords are stored in your operating system's credential store, not in the
+project. Camera names, addresses, and channels are stored in the settings
+database under `evidence\`.
 
 Each camera runs its own recorder, poll loop, and cooldown, so one camera going
 offline retries on its own without stalling the others.
@@ -61,8 +57,8 @@ Three levers, in the order worth reaching for:
    analyzed at once *across all cameras*, so simultaneous triggers queue instead
    of fighting over the GPU. Capture is deliberately outside that limit, it is
    mostly just waiting out the post-roll window.
-3. **`REOLINK_STREAM=sub`** and a shorter `SEGMENT_RETENTION_MINUTES` cut disk
-   and bandwidth sharply, at some cost in image detail.
+3. **Choose the `sub` stream** for a camera in Settings, and a shorter retention
+   time, which cut disk and bandwidth sharply, at some cost in image detail.
 
 Rolling-buffer disk use is roughly `cameras x retention x bitrate`.
 
