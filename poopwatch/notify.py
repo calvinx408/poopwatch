@@ -44,7 +44,7 @@ def _headline(verdict, trigger_epoch: float, camera: str = "") -> tuple[str, str
 
 
 def send_ntfy(title: str, body: str, image: Path | None = None,
-              cfg: Config | None = None) -> bool:
+              cfg: Config | None = None, *, link: str | None = None) -> bool:
     cfg = cfg or config
     if not cfg.ntfy_topic:
         log.debug("ntfy not configured, skipping push")
@@ -56,11 +56,15 @@ def send_ntfy(title: str, body: str, image: Path | None = None,
         "Priority": "high",
         "Tags": "poop,dog",
     }
+    if link:
+        headers["Click"] = link  # tapping the notification opens the event
     try:
         # ntfy attaches a binary body as a file; send the snapshot that way and
         # put the detail text in the Message header.
         if image and image.exists():
-            headers["Message"] = body.encode("ascii", "replace").decode("ascii")
+            # Headers must be one line, so the body's line breaks become spaces.
+            one_line = " ".join(body.split())
+            headers["Message"] = one_line.encode("ascii", "replace").decode("ascii")
             headers["Filename"] = "snapshot.jpg"
             r = requests.put(url, data=image.read_bytes(), headers=headers, timeout=20)
         else:
@@ -105,13 +109,19 @@ def send_email(subject: str, body: str, images: list[Path] | None = None,
         return False
 
 
+def _with_link(body: str, link: str | None) -> str:
+    return body + ("\n\nOpen the event: " + link if link else "")
+
+
 def alert(verdict, trigger_epoch: float, frames: list[Path],
-          cfg: Config | None = None, *, camera: str = "") -> bool:
+          cfg: Config | None = None, *, camera: str = "",
+          link: str | None = None) -> bool:
     """Fire both channels. Returns True if at least one got through."""
     cfg = cfg or config
     title, body = _headline(verdict, trigger_epoch, camera)
+    body = _with_link(body, link)
     best = frames[0] if frames else None
-    pushed = send_ntfy(title, body, best, cfg)
+    pushed = send_ntfy(title, body, best, cfg, link=link)
     mailed = send_email(title, body, frames, cfg)
     if not (pushed or mailed):
         log.warning("event detected but no alert channel is configured")
@@ -119,7 +129,8 @@ def alert(verdict, trigger_epoch: float, frames: list[Path],
 
 
 def alert_good(trigger_epoch: float, frames: list[Path],
-               cfg: Config | None = None, *, camera: str = "") -> bool:
+               cfg: Config | None = None, *, camera: str = "",
+               link: str | None = None) -> bool:
     """Positive alert: the dog went and the owner picked it up. Same channels as
     a violation, with a happier message."""
     from datetime import datetime
@@ -130,8 +141,9 @@ def alert_good(trigger_epoch: float, frames: list[Path],
     title = "Good human!"
     body = (where + "at " + when + ": the dog did its business and the human "
             "picked it up. Treat earned.")
+    body = _with_link(body, link)
     best = frames[0] if frames else None
-    pushed = send_ntfy(title, body, best, cfg)
+    pushed = send_ntfy(title, body, best, cfg, link=link)
     mailed = send_email(title, body, frames, cfg)
     return pushed or mailed
 
@@ -212,7 +224,8 @@ def configured_channels(cfg: Config | None = None) -> list[str]:
 
 
 def alert_walkby(trigger_epoch: float, frames: list[Path],
-                 cfg: Config | None = None, *, camera: str = "") -> bool:
+                 cfg: Config | None = None, *, camera: str = "",
+                 link: str | None = None) -> bool:
     """A dog walked past without pooping. Sent only when the user asks for it."""
     from datetime import datetime
 
@@ -221,7 +234,8 @@ def alert_walkby(trigger_epoch: float, frames: list[Path],
     where = (camera + " ") if camera else ""
     title = "Dog walk-by"
     body = where + "at " + when + ": a dog walked past without pooping."
+    body = _with_link(body, link)
     best = frames[0] if frames else None
-    pushed = send_ntfy(title, body, best, cfg)
+    pushed = send_ntfy(title, body, best, cfg, link=link)
     mailed = send_email(title, body, frames, cfg)
     return pushed or mailed

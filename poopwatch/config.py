@@ -322,6 +322,9 @@ class Config:
     smtp_password: str = field(default_factory=_smtp_password)
     alert_email_to: str = field(
         default_factory=lambda: _str("ALERT_EMAIL_TO", "alerts", "email_to"))
+    # Address your phone uses to reach the dashboard, for links in alerts.
+    dashboard_url: str = field(
+        default_factory=lambda: _str("DASHBOARD_URL", "alerts", "dashboard_url"))
     # Send a "Good human!" alert when a dog defecates and the owner cleans up.
     notify_good: bool = field(
         default_factory=lambda: _bool("NOTIFY_GOOD", "alerts", "notify_good", True))

@@ -39,6 +39,7 @@ ALERT_FIELDS: dict[str, type] = {
     "email_to": str,
     "notify_good": bool,
     "notify_walkbys": bool,
+    "dashboard_url": str,
 }
 
 GATE_BACKENDS = ("ollama", "haiku", "off")

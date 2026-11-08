@@ -162,6 +162,7 @@ def get_settings() -> dict:
             "email_to": config.alert_email_to,
             "notify_good": config.notify_good,
             "notify_walkbys": config.notify_walkbys,
+            "dashboard_url": config.dashboard_url,
         },
         "cameras": [_camera_view(c) for c in config.cameras],
         "choices": {

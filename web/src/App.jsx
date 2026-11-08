@@ -23,6 +23,12 @@ export default function App() {
   const [filter, setFilter] = useState('analyzed')
   const [cameraFilter, setCameraFilter] = useState(null)
   const [selected, setSelected] = useState(null)
+
+  // Alert links look like /#event=42: open that event when the page loads.
+  useEffect(() => {
+    const match = window.location.hash.match(/event=(\d+)/)
+    if (match) setSelected(Number(match[1]))
+  }, [])
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState(null)

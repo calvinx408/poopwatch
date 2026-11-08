@@ -573,6 +573,18 @@ export default function SettingsPanel({ onClose, onSaved }) {
               <small className="muted">Subscribe to this topic in the ntfy phone app</small>
             </label>
             <label>
+              <span>Dashboard address</span>
+              <input
+                value={alerts.dashboard_url || ''}
+                onChange={(e) => patch('alerts', 'dashboard_url', e.target.value)}
+                placeholder="http://192.168.4.143:8420"
+                disabled={!editable}
+              />
+              <small className="muted">
+                Used for links in alerts. Your PC's address on your home network
+              </small>
+            </label>
+            <label>
               <span>Extra alerts</span>
               <MultiSelect
                 options={[

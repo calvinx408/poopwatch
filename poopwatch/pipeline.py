@@ -34,6 +34,12 @@ log = logging.getLogger(__name__)
 _analysis_slots = threading.BoundedSemaphore(max(1, config.max_concurrent_analyses))
 
 
+def _event_link(cfg: Config, event_id: int) -> str | None:
+    """Link to this event on the dashboard, if the user has set its address."""
+    base = (cfg.dashboard_url or "").strip().rstrip("/")
+    return (base + "/#event=" + str(event_id)) if base else None
+
+
 def _pick_thumb(frames: list[Frame], offset_s: float, dest: Path) -> Path | None:
     """Copy the frame nearest `offset_s` out as the event thumbnail."""
     if not frames:
@@ -155,7 +161,8 @@ def _analyze(cam: CameraConfig, event_id: int, frames: list[Frame],
             if notify_on_violation and cfg.notify_walkbys and gate.subject == "dog":
                 # A dog walked past without pooping; alert only if asked to.
                 evidence = [f.path for f in sample(frames, 4)]
-                notify.alert_walkby(trigger_epoch, evidence, cfg, camera=cam.name)
+                notify.alert_walkby(trigger_epoch, evidence, cfg, camera=cam.name,
+                                    link=_event_link(cfg, event_id))
             return store.get_event(event_id)
         log.info("[%s] event %d: gate passed, escalating to verdict",
                  cam.slug, event_id)
@@ -196,7 +203,8 @@ def _analyze(cam: CameraConfig, event_id: int, frames: list[Frame],
         evidence = [f.path for f in sample(frames, 4)]
         if thumb:
             evidence.insert(0, cfg.evidence_dir / thumb)
-        ok = notify.alert(verdict, trigger_epoch, evidence, cfg, camera=cam.name)
+        ok = notify.alert(verdict, trigger_epoch, evidence, cfg, camera=cam.name,
+                          link=_event_link(cfg, event_id))
         store.update_event(event_id, notified=int(ok),
                            stage="notified" if ok else "verdict")
     elif (notify_on_violation and cfg.notify_good and verdict.subject == "dog"
@@ -205,7 +213,8 @@ def _analyze(cam: CameraConfig, event_id: int, frames: list[Frame],
         evidence = [f.path for f in sample(frames, 4)]
         if thumb:
             evidence.insert(0, cfg.evidence_dir / thumb)
-        notify.alert_good(trigger_epoch, evidence, cfg, camera=cam.name)
+        notify.alert_good(trigger_epoch, evidence, cfg, camera=cam.name,
+                          link=_event_link(cfg, event_id))
 
     return store.get_event(event_id)
 
