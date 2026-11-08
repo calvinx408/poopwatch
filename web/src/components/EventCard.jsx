@@ -5,7 +5,7 @@ const SUBJECT_ICON = {
   dog: '🐕',
   human: '🧍',
   other_animal: '🐾',
-  none: '—',
+  none: '-',
 }
 
 export default function EventCard({ event, selected, onSelect }) {
@@ -34,7 +34,7 @@ export default function EventCard({ event, selected, onSelect }) {
       <div className="card-body">
         <div className="card-row">
           <span className="card-subject">
-            {SUBJECT_ICON[event.subject] || '—'} {event.subject || 'unknown'}
+            {SUBJECT_ICON[event.subject] || '-'} {event.subject || 'unknown'}
           </span>
           <span className="muted small">{formatTime(event.trigger_at)}</span>
         </div>

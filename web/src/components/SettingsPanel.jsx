@@ -177,7 +177,7 @@ function CameraRow({ cam, index, choices, onChange, onRemove, editable }) {
           <select value={cam.stream} onChange={set('stream')} disabled={!editable}>
             {(choices.streams || ['main', 'sub']).map((s) => (
               <option key={s} value={s}>
-                {s === 'main' ? 'main — full resolution' : 'sub — low res, less disk'}
+                {s === 'main' ? 'main, full resolution' : 'sub, low res, less disk'}
               </option>
             ))}
           </select>
@@ -189,7 +189,7 @@ function CameraRow({ cam, index, choices, onChange, onRemove, editable }) {
             onChange={set('scheme')}
             disabled={!editable}
           >
-            <option value="auto">auto — detect http or https</option>
+            <option value="auto">auto, detect http or https</option>
             <option value="http">http</option>
             <option value="https">https</option>
           </select>
@@ -230,7 +230,7 @@ function CameraRow({ cam, index, choices, onChange, onRemove, editable }) {
           {test.steps.map((s) => (
             <li key={s.name}>
               <span className={s.ok ? 'ok-text' : 'alarm'}>{s.ok ? '✓' : '✕'}</span>{' '}
-              <strong>{s.name}</strong> — <span className="muted">{s.detail}</span>
+              <strong>{s.name}</strong>, <span className="muted">{s.detail}</span>
             </li>
           ))}
         </ul>
@@ -255,7 +255,7 @@ export default function SettingsPanel({ onClose, onSaved }) {
   const [alertTesting, setAlertTesting] = useState(false)
 
   // Closing with unsaved edits asks first rather than silently throwing away
-  // whatever was typed -- a misplaced click used to lose the whole form.
+  // whatever was typed, a misplaced click used to lose the whole form.
   const attemptClose = () => {
     if (dirty) {
       setConfirmDiscard(true)
@@ -517,10 +517,10 @@ export default function SettingsPanel({ onClose, onSaved }) {
                 {(choices.gate_backends || []).map((g) => (
                   <option key={g} value={g}>
                     {g === 'ollama'
-                      ? 'ollama — local, free'
+                      ? 'ollama, local, free'
                       : g === 'haiku'
-                        ? 'haiku — ~$0.001/event'
-                        : 'off — send everything to the verdict model'}
+                        ? 'haiku, ~$0.001/event'
+                        : 'off, send everything to the verdict model'}
                   </option>
                 ))}
               </select>
@@ -681,7 +681,7 @@ export default function SettingsPanel({ onClose, onSaved }) {
               {alertTest.steps.map((s) => (
                 <li key={s.name}>
                   <span className={s.ok ? 'ok-text' : 'alarm'}>{s.ok ? '✓' : '✕'}</span>{' '}
-                  <strong>{s.name}</strong> — <span className="muted">{s.detail}</span>
+                  <strong>{s.name}</strong>, <span className="muted">{s.detail}</span>
                 </li>
               ))}
             </ul>

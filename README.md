@@ -1,7 +1,7 @@
 # PoopWatch
 
 Watches a Reolink camera feed and works out whether a dog defecated on your
-property — and whether whoever was walking it picked the mess up.
+property, and whether whoever was walking it picked the mess up.
 
 ![PoopWatch dashboard](docs/dashboard-demo.png)
 
@@ -25,13 +25,13 @@ Configure as many as you like. Each entry is a host + channel pair, which covers
 both common setups:
 
 ```ini
-# two standalone cameras -- different hosts
+# two standalone cameras, different hosts
 CAMERA_1_NAME=front yard
 CAMERA_1_HOST=192.168.1.50
 CAMERA_2_NAME=driveway
 CAMERA_2_HOST=192.168.1.51
 
-# or two channels on one NVR -- same host
+# or two channels on one NVR, same host
 CAMERA_2_NAME=side gate
 CAMERA_2_HOST=192.168.1.50
 CAMERA_2_CHANNEL=1
@@ -51,11 +51,11 @@ Every camera adds a continuously running ffmpeg process plus its share of disk.
 Three levers, in the order worth reaching for:
 
 1. **Turn a camera off from the dashboard.** Each camera is a pill in the header
-   — click it to stop or start that one camera. Stopping it kills its ffmpeg
+  , click it to stop or start that one camera. Stopping it kills its ffmpeg
    process and disk writes immediately, and the others keep running.
 2. **`MAX_CONCURRENT_ANALYSES`** (default 2) caps how many events may be
    analyzed at once *across all cameras*, so simultaneous triggers queue instead
-   of fighting over the GPU. Capture is deliberately outside that limit — it is
+   of fighting over the GPU. Capture is deliberately outside that limit, it is
    mostly just waiting out the post-roll window.
 3. **`REOLINK_STREAM=sub`** and a shorter `SEGMENT_RETENTION_MINUTES` cut disk
    and bandwidth sharply, at some cost in image detail.
@@ -73,7 +73,7 @@ trigger, which is usually where the evidence actually is.
 ## Requirements
 
 - Python 3.11+ (tested on 3.14)
-- ffmpeg — `winget install Gyan.FFmpeg`
+- ffmpeg, `winget install Gyan.FFmpeg`
 - Node 20+ (only to build the dashboard)
 - A Reolink camera or NVR reachable on your network, with RTSP enabled
 - [Ollama](https://ollama.com) for the free local gate, or an Anthropic API key
@@ -106,8 +106,8 @@ Check everything before you rely on it:
 ```
 
 `probe` verifies ffmpeg, the gate backend, your alert channels, and then every
-camera in turn — API reachability, whether that model supports animal AI
-detection, snapshots, and RTSP — and tells you which piece is the broken one.
+camera in turn, API reachability, whether that model supports animal AI
+detection, snapshots, and RTSP, and tells you which piece is the broken one.
 
 ## Running
 
@@ -181,7 +181,7 @@ don't want that.
 
 ## The dashboard
 
-Events are cards with a thumbnail and a verdict badge — red for *not picked up*,
+Events are cards with a thumbnail and a verdict badge, red for *not picked up*,
 green for *cleaned up*, muted for the ones a cheap stage filtered out. Each card
 is tagged with the camera it came from. Opening one gives you the clip, a
 scrubbable frame strip, the model's reasoning, and buttons to mark it correct, a
@@ -249,9 +249,9 @@ before you rely on these numbers.
 
 Two independent channels, both optional, neither able to break the other:
 
-- **ntfy** — set `NTFY_TOPIC` to something unguessable and subscribe to it in
+- **ntfy**, set `NTFY_TOPIC` to something unguessable and subscribe to it in
   the [ntfy](https://ntfy.sh) app. The snapshot is attached to the push.
-- **Email** — standard SMTP. For Gmail you need an app password, not your
+- **Email**, standard SMTP. For Gmail you need an app password, not your
   account password.
 
 Alerts fire only on a genuine violation: subject is a dog, defecation was
@@ -280,7 +280,8 @@ Improve the prompts from your feedback:
    ```
    This writes `evidenceeviewalse_positives.md`.
 3. Run Claude Code with `scripts\prompt_review.md` as its instructions. It
-   proposes changes in `evidenceeview\prompt_proposal.diff` and doesn't edit
+   proposes changes in `evidence
+eview\prompt_proposal.diff` and doesn't edit
    the prompts itself.
 4. Save representative events as test cases, then check any change against
    them:
@@ -321,7 +322,7 @@ not consented to being filmed and analyzed. A few things follow from that:
   extracted frames, and the SQLite log. None of it belongs in a public repo.
 - `.env` is gitignored; only `.env.example` with placeholders is committed.
 - Camera credentials are scrubbed from ffmpeg error output before it is logged
-  or served, because ffmpeg echoes the RTSP URL — password included — in most
+  or served, because ffmpeg echoes the RTSP URL, password included, in most
   of its error messages, and the dashboard displays those.
 - The server binds to `127.0.0.1` by default, so only this machine can reach it.
   To open it on your home network, set a dashboard password first (see

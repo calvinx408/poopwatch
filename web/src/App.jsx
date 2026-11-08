@@ -161,7 +161,7 @@ export default function App() {
           <button className="link-btn" onClick={() => setShowSettings(true)}>
             Open Settings
           </button>{' '}
-          to add one — you can test the connection before saving.
+          to add one, you can test the connection before saving.
         </p>
       )}
 

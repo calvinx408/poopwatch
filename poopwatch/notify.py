@@ -1,6 +1,6 @@
 """Alerting: ntfy push to your phone, and email with the snapshot attached.
 
-Both are best-effort and independent -- a dead SMTP server must never stop the
+Both are best-effort and independent, a dead SMTP server must never stop the
 push, and neither should ever crash the watcher.
 """
 from __future__ import annotations
@@ -29,7 +29,7 @@ def _headline(verdict, trigger_epoch: float, camera: str = "") -> tuple[str, str
         title = "Defecation detected, not cleaned up" + where
 
     body_lines = [
-        when + (" -- " + camera if camera else ""),
+        when + (", " + camera if camera else ""),
         "",
         "Subject: " + verdict.subject,
         "Handler present: " + ("yes" if verdict.handler_present else "no"),
@@ -165,7 +165,7 @@ def test_ntfy(topic: str, server: str) -> dict:
     except requests.RequestException as e:
         return {"name": "ntfy push", "ok": False, "detail": str(e)[:200]}
     return {"name": "ntfy push", "ok": True,
-            "detail": "Sent to " + url + " -- check your phone."}
+            "detail": "Sent to " + url + ", check your phone."}
 
 
 def test_email(host: str, port: int, user: str, password: str,

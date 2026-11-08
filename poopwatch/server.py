@@ -279,7 +279,7 @@ def test_alerts(body: AlertTestBody) -> dict:
 
     # Only the password falls back to the stored value, so it needn't be
     # retyped. Every other field is taken exactly as submitted: if the user
-    # cleared the host or recipient, that is what gets validated -- falling
+    # cleared the host or recipient, that is what gets validated, falling
     # back there would silently test a different target than the form shows.
     password = body.smtp_password or configstore.smtp_password()
 
@@ -311,7 +311,7 @@ def test_alerts(body: AlertTestBody) -> dict:
 def test_camera(body: CameraBody) -> dict:
     """Try the API and RTSP for a camera, without saving it.
 
-    This is the answer to 'is it actually connected?' -- it reports each step
+    This is the answer to 'is it actually connected?', it reports each step
     separately so a wrong password looks different from a wrong IP.
     """
     from .capture import grab_single_frame, scrub
@@ -358,7 +358,7 @@ def test_camera(body: CameraBody) -> dict:
         has_ai = "dog_cat" in state.supports
         steps.append({
             "name": "Animal AI detection", "ok": has_ai,
-            "detail": ("supported -- free first-stage filter"
+            "detail": ("supported, free first-stage filter"
                        if has_ai else
                        "not supported; will fall back to motion detection"),
         })
@@ -619,7 +619,7 @@ def stop_watcher(camera: str | None = None) -> dict:
 
 @app.post("/api/test-trigger")
 def test_trigger(camera: str | None = None) -> JSONResponse:
-    """Fire the pipeline by hand against live footage -- handy for aiming a
+    """Fire the pipeline by hand against live footage, handy for aiming a
     camera and sanity-checking the classifier. Alerts are suppressed."""
     from .pipeline import process_trigger
 

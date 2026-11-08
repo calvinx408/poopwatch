@@ -216,7 +216,7 @@ class WatcherPool:
 
     def start(self) -> None:
         if not self.watchers:
-            log.error("no cameras configured -- nothing to watch")
+            log.error("no cameras configured, nothing to watch")
             return
         for w in self.watchers:
             w.start()

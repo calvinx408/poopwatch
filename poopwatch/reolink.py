@@ -1,10 +1,10 @@
 """Minimal Reolink HTTP API client.
 
 Reolink cameras/NVRs expose a CGI JSON API. We use it for two things:
-  1. GetAiState -- the camera's own on-device AI tells us a dog/cat is in frame.
+  1. GetAiState, the camera's own on-device AI tells us a dog/cat is in frame.
      This is the free first stage of the funnel; it means we never run a model
      on an empty driveway.
-  2. Snap -- a still JPEG, handy for connectivity checks and alert thumbnails.
+  2. Snap, a still JPEG, handy for connectivity checks and alert thumbnails.
 
 Falls back to plain motion detection (GetMdState) on cameras without AI detect.
 """
@@ -92,7 +92,7 @@ class ReolinkClient:
         self._session = requests.Session()
 
         # Many Reolink models are https-only and answer port 80 with a 302 to
-        # https://<host>/ -- note it drops the path, so blindly following the
+        # https://<host>/, note it drops the path, so blindly following the
         # redirect requests the web UI root instead of the API and fails in a
         # confusing way. Resolve the scheme explicitly instead.
         self._scheme: str | None = None if cam.scheme == "auto" else cam.scheme
@@ -205,7 +205,7 @@ class ReolinkClient:
             raise ReolinkError(f"{cmd} failed: {e}") from e
 
         entry = data[0] if isinstance(data, list) and data else {}
-        # Token can expire early (reboot, session limit) -- re-login once.
+        # Token can expire early (reboot, session limit), re-login once.
         if entry.get("code") != 0:
             err = entry.get("error", {})
             if retry and str(err.get("detail", "")).lower().find("login") >= 0:
@@ -276,6 +276,6 @@ class ReolinkClient:
         return r.content
 
     def device_info(self) -> dict:
-        """Camera model/name. Raises ReolinkError if unreachable -- callers use
+        """Camera model/name. Raises ReolinkError if unreachable, callers use
         this as a liveness check, so it must not swallow failures."""
         return self._cmd("GetDevInfo", param={}) or {}

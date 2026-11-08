@@ -1,7 +1,7 @@
 """Rolling RTSP capture and event frame extraction.
 
 A single long-lived ffmpeg process stream-copies the camera into 10-second
-segments (near-zero CPU -- no re-encoding). Events are then just *time ranges*
+segments (near-zero CPU, no re-encoding). Events are then just *time ranges*
 into that ring buffer, which is what gives us pre-roll: by the time the camera's
 AI fires, the dog may already be squatting, and the seconds before the trigger
 are often the ones that matter.
@@ -123,7 +123,7 @@ class SegmentRecorder:
     def producing_video(self) -> tuple[bool, str]:
         """Whether video is actually landing on disk.
 
-        A running ffmpeg process is not proof of anything -- it will sit there
+        A running ffmpeg process is not proof of anything, it will sit there
         retrying against a camera with RTSP switched off. Only new segment
         files show that capture genuinely works.
         """
@@ -280,7 +280,7 @@ def build_event_clip(cam: CameraConfig, trigger_epoch: float, out_dir: Path,
 
     segs = segments_covering(cam, start, end, cfg)
     if not segs:
-        log.warning("[%s] no segments cover the event window -- "
+        log.warning("[%s] no segments cover the event window, "
                     "is the segmenter running?", cam.slug)
         return None, start
 
@@ -339,7 +339,7 @@ def extract_frames(clip: Path, out_dir: Path, fps: float = 1.0,
 
 def grab_single_frame(cam: CameraConfig, out_path: Path,
                       cfg: Config | None = None) -> bool:
-    """One frame straight off the RTSP stream -- used by `probe`."""
+    """One frame straight off the RTSP stream, used by `probe`."""
     cfg = cfg or config
     out_path.parent.mkdir(parents=True, exist_ok=True)
     res = _run([

@@ -1,7 +1,7 @@
 """Optional free local object detector (YOLO11 via ultralytics).
 
 Sits in front of the VLM gate as an even cheaper filter: if no dog appears in
-any frame, there is nothing to classify. Entirely optional -- without
+any frame, there is nothing to classify. Entirely optional, without
 ultralytics installed, the pipeline just skips this stage.
 
 A dog at the far side of a yard is only a few dozen pixels tall, and a model

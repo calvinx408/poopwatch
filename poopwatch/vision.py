@@ -1,7 +1,7 @@
 """Vision backends: local Ollama (free) or the Claude API.
 
-Both expose the same call shape -- hand them images plus a pydantic schema and
-get a validated object back -- so the pipeline can mix and match: a free local
+Both expose the same call shape, hand them images plus a pydantic schema and
+get a validated object back, so the pipeline can mix and match: a free local
 model for the high-volume gate, a stronger model only for the rare final
 verdict.
 """
@@ -142,7 +142,7 @@ def claude_client():
     if _client is None:
         import anthropic
         # Resolves ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN, or an
-        # `ant auth login` profile -- never hardcode a key.
+        # `ant auth login` profile, never hardcode a key.
         _client = anthropic.Anthropic()
     return _client
 

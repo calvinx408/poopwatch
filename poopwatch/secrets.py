@@ -7,10 +7,10 @@ there is no file to accidentally commit.
 
 Resolution order for a camera password, highest priority first:
 
-    1. environment variable  -- CAMERA_<n>_PASSWORD, or shared REOLINK_PASSWORD
-    2. OS credential store   -- what the Settings panel writes
-    3. password_env setting  -- names another environment variable to read
-    4. stored password       -- only when no credential store exists; warned about
+    1. environment variable , CAMERA_<n>_PASSWORD, or shared REOLINK_PASSWORD
+    2. OS credential store  , what the Settings panel writes
+    3. password_env setting , names another environment variable to read
+    4. stored password      , only when no credential store exists; warned about
 
 Environment wins so containers and service managers can override anything
 without editing files.
@@ -79,7 +79,7 @@ def resolve(camera_key: str, env_index: int | None,
     """Return (password, source) for one camera.
 
     `source` is a short label used by `probe` to show where each secret came
-    from -- and to warn when it came from plaintext on disk.
+    from, and to warn when it came from plaintext on disk.
     """
     if env_index is not None:
         specific = os.getenv("CAMERA_" + str(env_index) + "_PASSWORD", "")

@@ -167,7 +167,7 @@ def cmd_probe(args: argparse.Namespace) -> int:
 
     # --- cameras ---
     if not config.cameras:
-        print(BAD, "no cameras configured -- add one in the dashboard Settings")
+        print(BAD, "no cameras configured, add one in the dashboard Settings")
         failures += 1
     else:
         wanted = args.camera
@@ -179,7 +179,7 @@ def cmd_probe(args: argparse.Namespace) -> int:
             print()
             print("      " + str(len(config.cameras)) + " cameras share one rolling "
                   "buffer window of " + str(config.segment_retention_min) + " min.")
-            print("      Disk use scales with camera count -- switch a camera to the")
+            print("      Disk use scales with camera count, switch a camera to the")
             print("      'sub' stream or shorten retention in Settings if space is tight.")
 
     print()

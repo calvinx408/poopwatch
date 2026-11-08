@@ -7,7 +7,7 @@ Settings panel is the editor.
 Deliberately free of any import from `config`, because `config` imports *this*;
 the database path is derived here rather than read from the Config object.
 
-Camera passwords are not stored here -- see `secrets.py`.
+Camera passwords are not stored here, see `secrets.py`.
 """
 from __future__ import annotations
 

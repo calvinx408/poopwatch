@@ -1,7 +1,7 @@
 """The two classification stages: a cheap gate, then the real verdict.
 
-Stage 2 (gate) answers one narrow question -- "is an animal in a defecation
-posture here?" -- on a few frames. It runs on every camera trigger, so it must
+Stage 2 (gate) answers one narrow question, "is an animal in a defecation
+posture here?", on a few frames. It runs on every camera trigger, so it must
 be cheap: a local Ollama model by default.
 
 Stage 3 (verdict) only runs on gate hits. It gets the full labeled frame
@@ -114,7 +114,7 @@ light-colored shape counts as a dog only if it has four legs, a head, or a
 tail, or if it moves. A bag, paper, a planter cap, or any other still white
 object is not a dog.
 
-Be permissive at this stage -- a later, more careful check will confirm. If the
+Be permissive at this stage, a later, more careful check will confirm. If the
 posture is ambiguous but could be defecation, say true. If there is clearly no
 animal, or the animal is plainly just walking or standing, say false.
 
@@ -130,10 +130,10 @@ its offset in seconds from the start of the clip.
 
 Determine, carefully:
 
-1. SUBJECT -- Is the main actor a dog, a human, or another animal? The user
+1. SUBJECT, Is the main actor a dog, a human, or another animal? The user
    cares primarily about dogs.
 
-2. DEFECATION -- Did the subject actually defecate? Look for a dog with its
+2. DEFECATION, Did the subject actually defecate? Look for a dog with its
    rear lowered, hind legs bent, back arched, held stationary for several
    seconds across consecutive frames. A single ambiguous frame is not enough:
    require the posture to persist or to be followed by typical post-defecation
@@ -141,13 +141,13 @@ Determine, carefully:
    offset of the clearest frame. If a human appears to defecate, report
    subject="human" and record it the same way.
 
-3. HANDLER -- Is a person present who appears to be with the animal (holding a
+3. HANDLER, Is a person present who appears to be with the animal (holding a
    leash, walking alongside, waiting nearby)? A person elsewhere in frame who
    is unrelated does not count.
 
-4. CLEANUP -- Did anyone pick up the waste? Positive evidence looks like: a
+4. CLEANUP, Did anyone pick up the waste? Positive evidence looks like: a
    person approaching the exact spot, bending or crouching over it, a hand or
-   bag reaching toward the ground, then departing -- often carrying a small bag.
+   bag reaching toward the ground, then departing, often carrying a small bag.
    Be strict here. Do NOT infer cleanup merely because the person walked near
    the spot, bent down for another reason, or the clip ended. If the clip ends
    before anyone returns, cleanup_occurred is false and you should say so in

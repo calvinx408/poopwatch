@@ -1,7 +1,7 @@
 """Configuration.
 
 Settings are stored in the application database and edited through the
-dashboard's Settings panel -- there is no config file to maintain.
+dashboard's Settings panel, there is no config file to maintain.
 
 Environment variables still override anything, so containers, systemd units,
 and CI can set values without touching the database.
@@ -98,7 +98,7 @@ class CameraConfig:
     # are https-only and 302 from port 80.
     scheme: str = "auto"
     # LAN cameras ship self-signed certificates that can never validate, so
-    # verification is off by default -- but only for private addresses (see
+    # verification is off by default, but only for private addresses (see
     # `tls_verification_sane`).
     verify_tls: bool = False
 
@@ -400,7 +400,7 @@ class Config:
         """Re-read stored settings and refresh every field in place.
 
         Mutates this object rather than replacing it, because modules across
-        the app hold a reference to the same singleton -- rebinding would leave
+        the app hold a reference to the same singleton, rebinding would leave
         them pointing at stale settings.
         """
         global STORED
