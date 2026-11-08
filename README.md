@@ -258,6 +258,45 @@ Alerts fire only on a genuine violation: subject is a dog, defecation was
 observed, and cleanup was not. That rule is computed in code
 (`Verdict.is_violation`), not left to the model, so it can't drift.
 
+## Checking and improving detection
+
+Check the cameras whenever recordings look damaged or stop:
+
+```
+.venv\Scripts\python -m poopwatch check-cameras
+```
+
+It reports ping loss, whether each stream answers, and how many decode errors
+the latest recording has. Decode errors mean parts of the video were damaged in
+transit, usually from Wi-Fi.
+
+Improve the prompts from your feedback:
+
+1. Open events in the dashboard, mark wrong ones **False positive**, and write
+   a note on why. Notes are saved with the **Save note** button.
+2. Export them:
+   ```
+   .venv\Scripts\python -m poopwatch export-false-positives
+   ```
+   This writes `evidenceeviewalse_positives.md`.
+3. Run Claude Code with `scripts\prompt_review.md` as its instructions. It
+   proposes changes in `evidenceeview\prompt_proposal.diff` and doesn't edit
+   the prompts itself.
+4. Save representative events as test cases, then check any change against
+   them:
+   ```
+   .venv\Scripts\python -m poopwatch save-case <event id> <name> <pass|reject>
+   .venv\Scripts\python -m poopwatch regress
+   ```
+   Keep a change only if every case still passes.
+
+To run the detector and gate again on an event's saved frames, for example after
+a change:
+
+```
+.venv\Scripts\python -m poopwatch reprocess-event <event id>
+```
+
 ## Accuracy, honestly
 
 This is a camera pointed at a yard, not a courtroom exhibit.
