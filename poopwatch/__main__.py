@@ -318,6 +318,8 @@ def main(argv: list[str] | None = None) -> int:
     p_save.add_argument("expect", choices=["pass", "reject"],
                         help="pass = gate should see a dog defecating; reject = it should not")
     sub.add_parser("regress", help="run the gate on every saved test case")
+    sub.add_parser("check-cameras",
+                   help="check each camera's network, video stream, and recordings")
     p_re = sub.add_parser("reprocess-event",
                           help="re-run detector, gate, and verdict on an event's saved frames")
     p_re.add_argument("event_id", type=int)
@@ -336,6 +338,7 @@ def main(argv: list[str] | None = None) -> int:
         "export-false-positives": cmd_export_false_positives,
         "save-case": cmd_save_case,
         "regress": cmd_regress,
+        "check-cameras": cmd_check_cameras,
         "reprocess-event": cmd_reprocess_event,
     }[args.command](args)
 
@@ -365,6 +368,12 @@ def cmd_reprocess_event(args: argparse.Namespace) -> int:
     if event and event.get("reasoning"):
         print("      " + event["reasoning"])
     return 0
+
+
+def cmd_check_cameras(args: argparse.Namespace) -> int:
+    from .checkcams import check_all
+
+    return check_all(config)
 
 
 def cmd_regress(args: argparse.Namespace) -> int:

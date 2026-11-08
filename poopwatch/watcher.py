@@ -118,7 +118,11 @@ class CameraWatcher:
         while not self._stop.is_set():
             now = time.time()
             self.status.last_poll = now
-            if self.recorder.last_error:
+            if self.recorder.producing_video()[0]:
+                # Recording again: an old error is no longer current.
+                self.status.last_error = None
+                self.recorder.last_error = None
+            elif self.recorder.last_error:
                 self.status.last_error = self.recorder.last_error
 
             try:

@@ -104,6 +104,16 @@ Signs of a dog defecating:
 Do NOT report defecation for: sniffing the ground with legs straight, lying
 down, shaking, urinating with a raised leg, sitting upright, or simply walking.
 
+Dogs can be small, far away, or partly hidden by plants or walls, so look
+low in the frame, near planters, walls, and the edges of the sidewalk. A
+person walking with a leash almost always has a dog nearby, even if the dog
+is too small or hidden to see; treat that as a dog being walked.
+
+Small white dogs are common here, about the size of a maltipoo. A white or
+light-colored shape counts as a dog only if it has four legs, a head, or a
+tail, or if it moves. A bag, paper, a planter cap, or any other still white
+object is not a dog.
+
 Be permissive at this stage -- a later, more careful check will confirm. If the
 posture is ambiguous but could be defecation, say true. If there is clearly no
 animal, or the animal is plainly just walking or standing, say false.

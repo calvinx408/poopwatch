@@ -120,8 +120,10 @@ def _analyze(cam: CameraConfig, event_id: int, frames: list[Frame],
     # --- stage 1: free local detector ---------------------------------------
     if not cfg.disable_local_detector:
         local = detector.detect([f.path for f in frames])
-        if local and not local.worth_escalating:
-            log.info("[%s] event %d: no dog found locally, dropping",
+        # A person is often walking a dog too small or hidden to spot. Let
+        # those events reach the gate, which knows the leash rule.
+        if local and not local.worth_escalating and not local.person:
+            log.info("[%s] event %d: no dog or person found locally, dropping",
                      cam.slug, event_id)
             store.update_event(
                 event_id, stage="no_dog",
