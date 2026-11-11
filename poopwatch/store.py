@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS events (
     camera          TEXT    NOT NULL DEFAULT '',
     camera_slug     TEXT    NOT NULL DEFAULT '',
     camera_name     TEXT    NOT NULL DEFAULT '',
-    stage           TEXT    NOT NULL,  , where the funnel stopped
+    stage           TEXT    NOT NULL,   /* where the funnel stopped */
     subject         TEXT,
     defecation      INTEGER NOT NULL DEFAULT 0,
     handler_present INTEGER NOT NULL DEFAULT 0,
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS events (
     gate_json       TEXT,
     verdict_json    TEXT,
     clip_path       TEXT,
-    frame_paths     TEXT,               , JSON array, relative to evidence/
+    frame_paths     TEXT,               /* JSON array, relative to evidence/ */
     thumb_path      TEXT,
     notified        INTEGER NOT NULL DEFAULT 0,
     review          TEXT    NOT NULL DEFAULT 'unreviewed',

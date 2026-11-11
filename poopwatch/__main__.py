@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+import logging.handlers
+import queue
 import sys
 import time
 
@@ -28,11 +30,20 @@ def _setup_logging(verbose: bool) -> None:
         logs_dir / "poopwatch.log", when="midnight", backupCount=1,
         encoding="utf-8")
 
+    # The console is written from a background thread. A minimized or
+    # selected console window can block writes, and a blocked write under
+    # the logging lock would freeze every thread that logs, including the
+    # dashboard. Callers only enqueue, so they never wait on the console.
+    console_queue: queue.Queue = queue.Queue()
+    console = logging.handlers.QueueListener(
+        console_queue, logging.StreamHandler(), respect_handler_level=True)
+    console.start()
+
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
         format="%(asctime)s %(levelname)-7s %(name)-18s %(message)s",
         datefmt="%H:%M:%S",
-        handlers=[logging.StreamHandler(), file_handler],
+        handlers=[logging.handlers.QueueHandler(console_queue), file_handler],
     )
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
