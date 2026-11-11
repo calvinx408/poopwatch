@@ -370,4 +370,6 @@ web/            React dashboard (Vite)
 
 ## License
 
-MIT
+PolyForm Noncommercial 1.0.0. See [LICENSE](LICENSE).
+
+You may use, copy, and change PoopWatch for personal, hobby, research, and other noncommercial purposes. Commercial use, including selling it or offering it as a paid service, needs a separate commercial license from the copyright holders.
